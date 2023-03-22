@@ -1,9 +1,10 @@
 import re
+from typing import Dict, List, Set, Tuple, Union
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import LongformerTokenizer, LongformerForMultipleChoice, LongformerForSequenceClassification
-from selfcheck_utils import prepare_qa_input, prepare_distractor_input, prepare_answering_input
+from .utils import prepare_qa_input, prepare_distractor_input, prepare_answering_input
 
 def method_simple_counting(
         prob,
@@ -89,7 +90,7 @@ def method_bayes_with_alpha(
     return score
 
 class SelfCheckMQAG:
-    def __init__(self, device):
+    def __init__(self, device=None):
         # Question Generation Systems (G1 & G2)
         self.g1_tokenizer = AutoTokenizer.from_pretrained("potsawee/t5-large-generation-squad-QuestionAnswer")
         self.g1_model = AutoModelForSeq2SeqLM.from_pretrained("potsawee/t5-large-generation-squad-QuestionAnswer")
@@ -108,13 +109,17 @@ class SelfCheckMQAG:
         self.g2_model.eval()
         self.a_model.eval()
         self.u_model.eval()
+
+        if device is None:
+            device = torch.device("cpu")
         self.g1_model.to(device)
         self.g2_model.to(device)
         self.a_model.to(device)
         self.u_model.to(device)
         self.device = device
-        print("SelfCheck-MQAG initialized")
+        print("SelfCheck-MQAG initialized to device", device)
 
+    @torch.no_grad()
     def predict(
             self,
             sentences: List[str],
@@ -156,7 +161,7 @@ class SelfCheckMQAG:
                 scores.append(score)
             sent_score = np.mean(scores)
             sent_scores.append(sent_score)
-        return sent_scores
+        return np.array(sent_scores)
 
     def _answerability_scoring(
             self,

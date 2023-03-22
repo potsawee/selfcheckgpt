@@ -2,11 +2,37 @@ SelfCheckGPT
 =====================================================
 Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
 
-## Code/Models
+## Code/Package
 
-**Code is to be updated soon**
+### Installation
 
-## Dataset 
+    pip install selfcheckgpt
+
+### Example
+
+```python
+from selfcheckgpt.modeling_mqag import SelfCheckMQAG
+from selfcheckgpt.modeling_bertscore import SelfCheckBERTScore
+
+selfcheck_mqag = SelfCheckMQAG()
+selfcheck_bertscore = SelfCheckBERTScore()
+
+sent_scores_mqag = selfcheck_mqag.predict(
+    sentences,
+    passage,
+    [sample1, sample2, sample3],
+    num_questions_per_sent = 5,
+    scoring_method = 'bayes_with_alpha',
+    beta1 = 0.8, beta2 = 0.8,
+)
+sent_scores_bertscore = selfcheck_bertscore.predict(
+    sentences,
+    [sample1, sample2, sample3],
+)
+
+```
+
+## Dataset
 The `wiki_bio_gpt3_hallucination` dataset currently consists of 65 annotated passages. You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
 
 ### Option1: HuggingFace
@@ -37,7 +63,7 @@ Each instance consists of:
 
 ```
 @misc{manakul2023selfcheckgpt,
-      title={SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models}, 
+      title={SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models},
       author={Potsawee Manakul and Adian Liusie and Mark J. F. Gales},
       year={2023},
       eprint={2303.08896},
@@ -45,5 +71,3 @@ Each instance consists of:
       primaryClass={cs.CL}
 }
 ```
-
-

@@ -1,0 +1,36 @@
+SelfCheckGPT
+=====================================================
+
+- Code for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
+- More information can be found on our [project page](https://github.com/potsawee/selfcheckgpt)
+
+Installation
+-----------------------------------------------------
+
+    pip install selfcheckgpt
+
+
+Example
+-----------------------------------------------------
+
+```python
+from selfcheckgpt.modeling_mqag import SelfCheckMQAG
+from selfcheckgpt.modeling_bertscore import SelfCheckBERTScore
+
+selfcheck_mqag = SelfCheckMQAG()
+selfcheck_bertscore = SelfCheckBERTScore()
+
+sent_scores_mqag = selfcheck_mqag.predict(
+    sentences,
+    passage,
+    [sample1, sample2, sample3],
+    num_questions_per_sent = 5,
+    scoring_method = 'bayes_with_alpha',
+    beta1 = 0.8, beta2 = 0.8,
+)
+sent_scores_bertscore = selfcheck_bertscore.predict(
+    sentences,
+    [sample1, sample2, sample3],
+)
+
+```
