@@ -24,7 +24,7 @@ CLASSIFIERS = [
 # calling the setup function
 setup(
     name='selfcheckgpt',
-    version='0.1.0',
+    version='0.1.1',
     description='SelfCheckGPT - Assessing text-based responses from LLMs',
     long_description=long_description,
     url='https://github.com/potsawee/selfcheckgpt',
@@ -34,5 +34,6 @@ setup(
     packages=['selfcheckgpt'],
     classifiers=CLASSIFIERS,
     install_requires=REQUIREMENTS,
-    keywords='selfcheckgpt'
+    keywords='selfcheckgpt',
+    include_package_data=True,
 )

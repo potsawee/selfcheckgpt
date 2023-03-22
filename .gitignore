@@ -1,3 +1,4 @@
 build/
 selfcheckgpt.egg-info
 examples/
+dist/
