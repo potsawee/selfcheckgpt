@@ -10,6 +10,8 @@ Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination
 
 ### Example
 
+See more details in Jupyter Notebook ```demo/demo1.ipynb```
+
 ```python
 from selfcheckgpt.modeling_mqag import SelfCheckMQAG
 from selfcheckgpt.modeling_bertscore import SelfCheckBERTScore

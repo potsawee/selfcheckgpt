@@ -2,3 +2,4 @@ build/
 selfcheckgpt.egg-info
 examples/
 dist/
+demo/.ipynb_checkpoints/
