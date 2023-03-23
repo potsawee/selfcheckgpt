@@ -21,11 +21,15 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3",
 ]
 
+VERSION = {}
+with open("selfcheckgpt/version.py", "r") as version_file:
+    exec(version_file.read(), VERSION)
+
 # calling the setup function
 setup(
     name='selfcheckgpt',
-    version='0.1.1',
-    description='SelfCheckGPT - Assessing text-based responses from LLMs',
+    version=VERSION["__version__"],
+    description='SelfCheckGPT: Assessing text-based responses from LLMs',
     long_description=long_description,
     url='https://github.com/potsawee/selfcheckgpt',
     author='Potsawee Manakul',

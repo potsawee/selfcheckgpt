@@ -13,8 +13,7 @@ Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination
 See more details in Jupyter Notebook ```demo/demo1.ipynb```
 
 ```python
-from selfcheckgpt.modeling_mqag import SelfCheckMQAG
-from selfcheckgpt.modeling_bertscore import SelfCheckBERTScore
+from selfcheckgpt.modeling_selfcheck import SelfCheckMQAG, SelfCheckBERTScore
 
 selfcheck_mqag = SelfCheckMQAG()
 selfcheck_bertscore = SelfCheckBERTScore()
@@ -31,7 +30,6 @@ sent_scores_bertscore = selfcheck_bertscore.predict(
     sentences,
     [sample1, sample2, sample3],
 )
-
 ```
 
 ## Dataset

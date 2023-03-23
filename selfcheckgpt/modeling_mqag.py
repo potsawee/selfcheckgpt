@@ -1,99 +1,14 @@
 import re
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union, Any
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from transformers import LongformerTokenizer, LongformerForMultipleChoice, LongformerForSequenceClassification
-from .utils import prepare_qa_input, prepare_distractor_input, prepare_answering_input
-
-# ---------------------------------------------------------------------------------------- #
-# Functions for counting
-def method_simple_counting(
-        prob,
-        u_score,
-        prob_s,
-        u_score_s,
-        num_samples,
-        AT,
-    ):
-    """
-    simple counting method score => count_mismatch / (count_match + count_mismatch)
-    :return score: 'inconsistency' score
-    """
-    # bad questions, i.e. not answerable given the passage
-    if u_score < AT:
-        return 0.5
-    a_DT = np.argmax(prob)
-    count_good_sample, count_match = 0, 0
-    for s in range(num_samples):
-        if u_score_s[s] >= AT:
-            count_good_sample += 1
-            a_S = np.argmax(prob_s[s])
-            if a_DT == a_S:
-                count_match += 1
-    if count_good_sample == 0:
-        score = 0.5
-    else:
-        score = (count_good_sample-count_match) / count_good_sample
-    return score
-
-def method_vanilla_bayes(
-        prob,
-        u_score,
-        prob_s,
-        u_score_s,
-        num_samples,
-        beta1, beta2, AT,
-    ):
-    """
-    (vanilla) bayes method score: compute P(sentence is non-factual | count_match, count_mismatch)
-    :return score: 'inconsistency' score
-    """
-    if u_score < AT:
-        return 0.5
-    a_DT = np.argmax(prob)
-    count_match, count_mismatch = 0, 0
-    for s in range(num_samples):
-        if u_score_s[s] >= AT:
-            a_S = np.argmax(prob_s[s])
-            if a_DT == a_S:
-                count_match += 1
-            else:
-                count_mismatch += 1
-    gamma1 = beta2 / (1.0-beta1)
-    gamma2 = beta1 / (1.0-beta2)
-    score = (gamma2**count_mismatch) / ((gamma1**count_match) + (gamma2**count_mismatch))
-    return score
-
-def method_bayes_with_alpha(
-        prob,
-        u_score,
-        prob_s,
-        u_score_s,
-        num_samples,
-        beta1, beta2,
-    ):
-    """
-    bayes method (with answerability score, i.e. soft-counting) score
-    :return score: 'inconsistency' score
-    """
-    a_DT = np.argmax(prob)
-    count_match, count_mismatch = 0, 0
-    for s in range(num_samples):
-        ans_score = u_score_s[s]
-        a_S = np.argmax(prob_s[s])
-        if a_DT == a_S:
-            count_match += ans_score
-        else:
-            count_mismatch += ans_score
-    gamma1 = beta2 / (1.0-beta1)
-    gamma2 = beta1 / (1.0-beta2)
-    score = (gamma2**count_mismatch) / ((gamma1**count_match) + (gamma2**count_mismatch))
-    return score
+from transformers import LongformerTokenizer, LongformerForMultipleChoice
+from selfcheckgpt.utils import prepare_qa_input, prepare_distractor_input, prepare_answering_input
+from selfcheckgpt.utils import MQAGConfig, get_prob_distances
 
 # ---------------------------------------------------------------------------------------- #
 # Functions for Question Generation & Answering
-
 def question_generation_sentence_level(
         g1_model,
         g1_tokenizer,
@@ -103,7 +18,7 @@ def question_generation_sentence_level(
         passage,
         num_questions_per_sent,
         device,
-    ):
+):
     qa_input_ids = prepare_qa_input(
             g1_tokenizer,
             context=sentence,
@@ -160,6 +75,136 @@ def question_generation_sentence_level(
         questions.append(question_item)
     return questions
 
+
+def question_generation_sampling(
+        g1_model,
+        g1_tokenizer,
+        g2_model,
+        g2_tokenizer,
+        context,
+        num_questions,
+        device,
+):
+    qa_input_ids = prepare_qa_input(
+            g1_tokenizer,
+            context=context,
+            device=device,
+    )
+    max_repeated_sampling = int(num_questions * 1.5) # sometimes generated question+answer is invalid
+    num_valid_questions = 0
+    questions = []
+    for q_ in range(max_repeated_sampling):
+        # Stage G.1: question+answer generation
+        outputs = g1_model.generate(
+            qa_input_ids,
+            max_new_tokens=128,
+            do_sample=True,
+        )
+        question_answer = g1_tokenizer.decode(outputs[0], skip_special_tokens=False)
+        question_answer = question_answer.replace(g1_tokenizer.pad_token, "").replace(g1_tokenizer.eos_token, "")
+        question_answer_split = question_answer.split(g1_tokenizer.sep_token)
+        if len(question_answer_split) == 2:
+            # valid Question + Annswer output
+            num_valid_questions += 1
+        else:
+            continue
+        question = question_answer_split[0].strip()
+        answer = question_answer_split[1].strip()
+
+        # Stage G.2: Distractor Generation
+        distractor_input_ids = prepare_distractor_input(
+            g2_tokenizer,
+            context = context,
+            question = question,
+            answer = answer,
+            device = device,
+            separator = g2_tokenizer.sep_token,
+        )
+        outputs = g2_model.generate(
+            distractor_input_ids,
+            max_new_tokens=128,
+            do_sample=True,
+        )
+        distractors = g2_tokenizer.decode(outputs[0], skip_special_tokens=False)
+        distractors = distractors.replace(g2_tokenizer.pad_token, "").replace(g2_tokenizer.eos_token, "")
+        distractors = re.sub("<extra\S+>", g2_tokenizer.sep_token, distractors)
+        distractors = [y.strip() for y in distractors.split(g2_tokenizer.sep_token)]
+        options = [answer] + distractors
+
+        while len(options) < 4:
+            options.append(options[-1])
+
+        question_item = {
+            'question': question,
+            'options': options,
+        }
+        questions.append(question_item)
+        if num_valid_questions == num_questions:
+            break
+    return questions
+
+def question_generation_beamsearch(
+        g1_model,
+        g1_tokenizer,
+        g2_model,
+        g2_tokenizer,
+        context,
+        num_beams,
+        device,
+):
+    qa_input_ids = prepare_qa_input(
+            g1_tokenizer,
+            context=context,
+            device=device,
+    )
+    # Stage G.1: question+answer generation
+    outputs = g1_model.generate(
+        qa_input_ids,
+        max_new_tokens=128,
+        do_sample=False,
+        num_beams=num_beams,
+    )
+    question_answer = g1_tokenizer.decode(outputs[0], skip_special_tokens=False)
+    question_answer = question_answer.replace(g1_tokenizer.pad_token, "").replace(g1_tokenizer.eos_token, "")
+    question_answer_split = question_answer.split(g1_tokenizer.sep_token)
+    if len(question_answer_split) == 2:
+        question = question_answer_split[0].strip()
+        answer = question_answer_split[1].strip()
+    else:
+        question = question_answer_split[0].strip()
+        answer = 'none'
+
+    # Stage G.2: Distractor Generation
+    distractor_input_ids = prepare_distractor_input(
+        g2_tokenizer,
+        context = context,
+        question = question,
+        answer = answer,
+        device = device,
+        separator = g2_tokenizer.sep_token,
+    )
+    outputs = g2_model.generate(
+        distractor_input_ids,
+        max_new_tokens=128,
+        do_sample=False,
+        num_beams=num_beams,
+    )
+    distractors = g2_tokenizer.decode(outputs[0], skip_special_tokens=False)
+    distractors = distractors.replace(g2_tokenizer.pad_token, "").replace(g2_tokenizer.eos_token, "")
+    distractors = re.sub("<extra\S+>", g2_tokenizer.sep_token, distractors)
+    distractors = [y.strip() for y in distractors.split(g2_tokenizer.sep_token)]
+    options = [answer] + distractors
+
+    while len(options) < 4:
+        options.append(options[-1])
+
+    question_item = {
+        'question': question,
+        'options': options,
+    }
+    return [question_item]
+
+
 def answering(
         a_model,
         a_tokenizer,
@@ -168,7 +213,7 @@ def answering(
         context,
         max_seq_length,
         device,
-    ):
+):
     answering_given_passage = prepare_answering_input(
         tokenizer=a_tokenizer,
         question=question,
@@ -181,127 +226,143 @@ def answering(
     prob = torch.softmax(answering_outputs['logits'], dim=-1)[0].cpu().numpy()
     return prob
 
-def answerability_scoring(
-        u_model,
-        u_tokenizer,
-        question,
-        context,
-        max_length,
-        device,
-    ):
-    """
-    :return prob: prob -> 0.0 means unanswerable, prob -> 1.0 means answerable
-    """
-    input_text = question + ' ' + u_tokenizer.sep_token + ' ' + context
-    inputs = u_tokenizer(input_text, max_length=max_length, truncation=True, return_tensors="pt")
-    inputs = inputs.to(device)
-    logits = u_model(**inputs).logits
-    logits = logits.squeeze(-1)
-    prob = torch.sigmoid(logits).item()
-    return prob
-
 # ---------------------------------------------------------------------------------------- #
-# Main SelfCheckMQAG class
-
-class SelfCheckMQAG:
-    def __init__(self, device=None):
-        # Question Generation Systems (G1 & G2)
-        self.g1_tokenizer = AutoTokenizer.from_pretrained("potsawee/t5-large-generation-squad-QuestionAnswer")
-        self.g1_model = AutoModelForSeq2SeqLM.from_pretrained("potsawee/t5-large-generation-squad-QuestionAnswer")
-        self.g2_tokenizer = AutoTokenizer.from_pretrained("potsawee/t5-large-generation-race-Distractor")
-        self.g2_model = AutoModelForSeq2SeqLM.from_pretrained("potsawee/t5-large-generation-race-Distractor")
-
-        # Question Answering System (A)
-        self.a_tokenizer = LongformerTokenizer.from_pretrained("potsawee/longformer-large-4096-answering-race")
-        self.a_model = LongformerForMultipleChoice.from_pretrained("potsawee/longformer-large-4096-answering-race")
-
-        # (Un)Answerability System (U)
-        self.u_tokenizer = LongformerTokenizer.from_pretrained("potsawee/longformer-large-4096-answerable-squad2")
-        self.u_model = LongformerForSequenceClassification.from_pretrained("potsawee/longformer-large-4096-answerable-squad2")
-
-        self.g1_model.eval()
-        self.g2_model.eval()
-        self.a_model.eval()
-        self.u_model.eval()
+# Main MQAG class
+class MQAG:
+    def __init__(self,
+        g1_model_type: str = 'race',
+        device = None,
+    ):
+        assert g1_model_type in ['race', 'squad']
+        self.g1_model_type = g1_model_type
 
         if device is None:
             device = torch.device("cpu")
-        self.g1_model.to(device)
-        self.g2_model.to(device)
-        self.a_model.to(device)
-        self.u_model.to(device)
         self.device = device
-        print("SelfCheck-MQAG initialized to device", device)
+        self.inti_generation = False
+        self.inti_answering = False
+        print(f"MQAG ({g1_model_type}) initialized to {device}")
+
+    def _initialize_generation(self):
+        if self.g1_model_type == 'race':
+            g1_model_name = MQAGConfig.generation1_race
+        elif self.g1_model_type == 'squad':
+            g1_model_name = MQAGConfig.generation1_squad
+
+        # Question Generation Systems (G1 & G2)
+        self.g1_tokenizer = AutoTokenizer.from_pretrained(g1_model_name)
+        self.g1_model = AutoModelForSeq2SeqLM.from_pretrained(g1_model_name)
+        self.g2_tokenizer = AutoTokenizer.from_pretrained(MQAGConfig.generation2)
+        self.g2_model = AutoModelForSeq2SeqLM.from_pretrained(MQAGConfig.generation2)
+        self.g1_model.eval()
+        self.g2_model.eval()
+        self.g1_model.to(self.device)
+        self.g2_model.to(self.device)
+        print(f"Initialized Generation")
+
+    def _initialize_answering(self):
+        # Question Answering System (A)
+        self.a_tokenizer = LongformerTokenizer.from_pretrained(MQAGConfig.answering)
+        self.a_model = LongformerForMultipleChoice.from_pretrained(MQAGConfig.answering)
+        self.a_model.eval()
+        self.a_model.to(self.device)
+        print(f"Initialized Answering")
+
+    def score(
+        self,
+        candidate: str,
+        reference: str,
+        num_questions: int = 10,
+        verbose: bool = False,
+    ):
+        """
+        MQAG score
+        :param candidate: text from which questions will be derived, e.g. the summary
+        :param reference: text to be used as the ground-truth, e.g. the original document
+        :return distances: dict{'kl_div': float, 'counting': float, 'hellinger': float, 'total_variation': float}
+        """
+        questions = self.generate(context=candidate, do_sample=True, num_questions=num_questions)
+        probs_cad = self.answer(questions=questions, context=candidate)
+        probs_ref = self.answer(questions=questions, context=reference)
+        kl_, ct_, hl_, tv_ = 0, 0, 0, 0
+        for i in range(num_questions):
+            p1 = probs_cad[i]
+            p2 = probs_ref[i]
+            kl, ct, hl, tv = get_prob_distances(p1, p2)
+            kl_ += kl
+            ct_ += ct
+            hl_ += hl
+            tv_ += tv
+        kl_ = kl_ / num_questions
+        ct_ = ct_ / num_questions
+        hl_ = hl_ / num_questions
+        tv_ = tv_ / num_questions
+        distances = {'kl_div': kl_, 'counting': ct_, 'hellinger': hl_, 'total_variation': tv_}
+        if verbose:
+            for i in range(num_questions):
+                question, options = questions[i]['question'], questions[i]['options']
+                print(f"Q{i+1}: {question}")
+                print("(1) [P(.|cand)={:.2f}%]\t[P(.|ref)={:.2f}%]\t{}".format(probs_cad[i][0]*100,  probs_ref[i][0]*100, options[0]))
+                print("(2) [P(.|cand)={:.2f}%]\t[P(.|ref)={:.2f}%]\t{}".format(probs_cad[i][1]*100,  probs_ref[i][1]*100, options[1]))
+                print("(3) [P(.|cand)={:.2f}%]\t[P(.|ref)={:.2f}%]\t{}".format(probs_cad[i][2]*100,  probs_ref[i][2]*100, options[2]))
+                print("(4) [P(.|cand)={:.2f}%]\t[P(.|ref)={:.2f}%]\t{}".format(probs_cad[i][3]*100,  probs_ref[i][3]*100, options[3]))
+                print("-------------------------------------------------------------------------------")
+        return distances
 
     @torch.no_grad()
-    def predict(
-            self,
-            sentences: List[str],
-            passage: str,
-            sampled_passages: List[str],
-            num_questions_per_sent: int = 5,
-            scoring_method: str = "bayes_with_alpha",
-            **kwargs,
-        ):
-        """
-        This function takes sentences (to be evaluated) with sampled passages (evidence), and return sent-level scores
-        :param sentences: list[str] -- sentences to be evaluated, e.g. GPT text response spilt by spacy
-        :param passage: str -- the passage to be evaluated, note that splitting(passage) ---> sentences
-        :param sampled_passages: list[str] -- stochastically generated responses (without sentence splitting)
-        :param num_questions_per_sent: int -- number of quetions to be generated per sentence
-        :return sent_scores: sentence-level score of the same length as len(sentences) # inconsistency_score, i.e. higher means likely hallucination
-        """
-        assert scoring_method in ['counting', 'bayes', 'bayes_with_alpha']
-        num_samples = len(sampled_passages)
-        sent_scores = []
-        for sentence in sentences:
-
-            # Question + Choices Generation
-            questions = question_generation_sentence_level(
+    def generate(
+        self,
+        context: str,
+        do_sample: bool = True,
+        num_questions: int = 5,
+        **kwargs
+    ):
+        if self.inti_generation == False:
+            self._initialize_generation()
+            self.inti_generation = True
+        if do_sample:
+            questions = question_generation_sampling(
                 self.g1_model, self.g1_tokenizer,
                 self.g2_model, self.g2_tokenizer,
-                sentence, passage, num_questions_per_sent, self.device)
+                context, num_questions, self.device,
+            )
+        else: # beam_search decoding
+            if num_questions != 1:
+                print("warning: do_sample is False ---> only 1 sample will be generated")
+            if 'num_beams' in kwargs:
+                num_beams = kwargs['num_beams']
+            else:
+                num_beams = 5
+            questions = question_generation_beamsearch(
+                self.g1_model, self.g1_tokenizer,
+                self.g2_model, self.g2_tokenizer,
+                context, num_beams, self.device,
+            )
+        return questions
 
-            # Answering
-            scores = []
-            max_seq_length = 4096 # answering & answerability max length
-            for question_item in questions:
-                question, options = question_item['question'], question_item['options']
+    @torch.no_grad()
+    def answer(
+        self,
+        questions: List[Dict[str, Any]],
+        context: str,
+    ):
+        """
+        :param quetions: List of x where x = {'question': str, 'options': List[str]}
+        :param context: string
+        :return probs: np.array of dimension (num_questions, 4)
+        """
+        if self.inti_answering == False:
+            self._initialize_answering()
+            self.inti_answering = True
 
-                # response
-                prob = answering(
-                    self.a_model, self.a_tokenizer,
-                    question, options, passage,
-                    max_seq_length, self.device)
-
-                u_score = answerability_scoring(
-                    self.u_model, self.u_tokenizer,
-                    question, passage,
-                    max_seq_length, self.device)
-
-                prob_s = np.zeros((num_samples, 4))
-                u_score_s = np.zeros((num_samples,))
-                for si, sampled_passage in enumerate(sampled_passages):
-
-                    # sample
-                    prob_s[si] = answering(
-                        self.a_model, self.a_tokenizer,
-                        question, options, sampled_passage,
-                        max_seq_length, self.device)
-                    u_score_s[si] = answerability_scoring(
-                        self.u_model, self.u_tokenizer,
-                        question, sampled_passage,
-                        max_seq_length, self.device)
-
-                # doing comparision
-                if scoring_method == 'counting':
-                    score = method_simple_counting(prob, u_score, prob_s, u_score_s, num_samples, AT=kwargs['AT'])
-                elif scoring_method == 'bayes':
-                    score = method_vanilla_bayes(prob, u_score, prob_s, u_score_s, num_samples, beta1=kwargs['beta1'], beta2=kwargs['beta2'], AT=kwargs['AT'])
-                elif scoring_method == 'bayes_with_alpha':
-                    score = method_bayes_with_alpha(prob, u_score, prob_s, u_score_s, num_samples, beta1=kwargs['beta1'], beta2=kwargs['beta2'])
-                scores.append(score)
-            sent_score = np.mean(scores)
-            sent_scores.append(sent_score)
-
-        return np.array(sent_scores)
+        num_questions = len(questions)
+        probs = np.zeros((num_questions, 4))
+        for i, question_item in enumerate(questions):
+            question, options = question_item['question'], question_item['options']
+            prob = answering(
+                self.a_model, self.a_tokenizer,
+                question, options, context,
+                max_seq_length=4096, device=self.device,
+            )
+            probs[i] = prob
+        return probs
