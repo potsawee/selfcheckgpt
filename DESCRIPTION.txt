@@ -12,8 +12,9 @@ Installation
     pip install selfcheckgpt
 
 
-Example
+SelfCheckGPT Usage
 -----------------------------------------------------
+See more details in Jupyter Notebook: https://github.com/potsawee/selfcheckgpt/blob/main/demo/SelfCheck_demo1.ipynb
 
 .. code:: python
 
@@ -34,3 +35,12 @@ Example
         sentences,
         [sample1, sample2, sample3],
     )
+
+MQAG Usage
+-----------------------------------------------------
+See more details in Jupyter Notebook: https://github.com/potsawee/selfcheckgpt/blob/main/demo/MQAG_demo1.ipynb
+
+.. code:: python
+
+    from selfcheckgpt.modeling_mqag import MQAG
+    mqag_model = MQAG()

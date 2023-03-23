@@ -2,15 +2,17 @@ SelfCheckGPT
 =====================================================
 Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
 
+<div style="text-align:center"><img src="demo/diagram.drawio.png" height="360px" /></div>
+
 ## Code/Package
 
 ### Installation
 
     pip install selfcheckgpt
 
-### Example
+### SelfCheckGPT Usage
 
-See more details in Jupyter Notebook ```demo/demo1.ipynb```
+Both `SelfCheckMQAG()` and `SelfCheckBERTScore()` have `predict()` which will output the sentence-level scores w.r.t. sampled passages. You can use packages such as spacy to split passage into sentences. For reproducibility, you can set `torch.manual_seed` before calling this function. See more details in Jupyter Notebook [```demo/SelfCheck_demo1.ipynb```](demo/SelfCheck_demo1.ipynb)
 
 ```python
 from selfcheckgpt.modeling_selfcheck import SelfCheckMQAG, SelfCheckBERTScore
@@ -58,6 +60,18 @@ Each instance consists of:
 - `gpt3_sentences`: `gpt3_text` split into sentences using `spacy`
 - `annotation`: human annotation at the sentence level
 -  `wiki_bio_test_idx`: ID of the concept/individual from the original wikibio dataset (testset)
+
+## Miscellaneous
+[MQAG (Multiple-choice Question Answering and Generation)](https://arxiv.org/abs/2301.12307) was proposed in our previous work. Our MQAG implementation is included in this package, which can be used to: (1) generate multiple-choice questions, (2) answer multiple-choice questions, (3) obtain MQAG score.
+
+### MQAG Usage
+
+```python
+from selfcheckgpt.modeling_mqag import MQAG
+mqag_model = MQAG()
+```
+
+It has three main functions: `generate()`, `answer()`, `score()`. We show an example usage in [```demo/MQAG_demo1.ipynb```](demo/MQAG_demo1.ipynb)
 
 ## Citation
 
