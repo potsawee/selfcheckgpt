@@ -6,6 +6,8 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import LongformerTokenizer, LongformerForMultipleChoice, LongformerForSequenceClassification
 from .utils import prepare_qa_input, prepare_distractor_input, prepare_answering_input
 
+# ---------------------------------------------------------------------------------------- #
+# Functions for counting
 def method_simple_counting(
         prob,
         u_score,
@@ -89,6 +91,118 @@ def method_bayes_with_alpha(
     score = (gamma2**count_mismatch) / ((gamma1**count_match) + (gamma2**count_mismatch))
     return score
 
+# ---------------------------------------------------------------------------------------- #
+# Functions for Question Generation & Answering
+
+def question_generation_sentence_level(
+        g1_model,
+        g1_tokenizer,
+        g2_model,
+        g2_tokenizer,
+        sentence,
+        passage,
+        num_questions_per_sent,
+        device,
+    ):
+    qa_input_ids = prepare_qa_input(
+            g1_tokenizer,
+            context=sentence,
+            device=device,
+    )
+    num_valid_questions = 0
+    questions = []
+    for q_ in range(num_questions_per_sent):
+        # Stage G.1: question+answer generation
+        outputs = g1_model.generate(
+            qa_input_ids,
+            max_new_tokens=128,
+            do_sample=True,
+        )
+        question_answer = g1_tokenizer.decode(outputs[0], skip_special_tokens=False)
+        question_answer = question_answer.replace(g1_tokenizer.pad_token, "").replace(g1_tokenizer.eos_token, "")
+        question_answer_split = question_answer.split(g1_tokenizer.sep_token)
+        if len(question_answer_split) == 2:
+            # valid Question + Annswer output
+            num_valid_questions += 1
+        else:
+            continue
+        question = question_answer_split[0].strip()
+        answer = question_answer_split[1].strip()
+
+        # Stage G.2: Distractor Generation
+        distractor_input_ids = prepare_distractor_input(
+            g2_tokenizer,
+            context = passage,
+            question = question,
+            answer = answer,
+            device = device,
+            separator = g2_tokenizer.sep_token,
+        )
+        outputs = g2_model.generate(
+            distractor_input_ids,
+            max_new_tokens=128,
+            do_sample=True,
+        )
+        distractors = g2_tokenizer.decode(outputs[0], skip_special_tokens=False)
+        distractors = distractors.replace(g2_tokenizer.pad_token, "").replace(g2_tokenizer.eos_token, "")
+        distractors = re.sub("<extra\S+>", g2_tokenizer.sep_token, distractors)
+        distractors = [y.strip() for y in distractors.split(g2_tokenizer.sep_token)]
+        options = [answer] + distractors
+
+        while len(options) < 4:
+            # print("Warning: options =", options)
+            options.append(options[-1])
+
+        question_item = {
+            'question': question,
+            'options': options,
+        }
+        questions.append(question_item)
+    return questions
+
+def answering(
+        a_model,
+        a_tokenizer,
+        question,
+        options,
+        context,
+        max_seq_length,
+        device,
+    ):
+    answering_given_passage = prepare_answering_input(
+        tokenizer=a_tokenizer,
+        question=question,
+        options=options,
+        context=context,
+        device=device,
+        max_seq_length=max_seq_length,
+    )
+    answering_outputs = a_model(**answering_given_passage)
+    prob = torch.softmax(answering_outputs['logits'], dim=-1)[0].cpu().numpy()
+    return prob
+
+def answerability_scoring(
+        u_model,
+        u_tokenizer,
+        question,
+        context,
+        max_length,
+        device,
+    ):
+    """
+    :return prob: prob -> 0.0 means unanswerable, prob -> 1.0 means answerable
+    """
+    input_text = question + ' ' + u_tokenizer.sep_token + ' ' + context
+    inputs = u_tokenizer(input_text, max_length=max_length, truncation=True, return_tensors="pt")
+    inputs = inputs.to(device)
+    logits = u_model(**inputs).logits
+    logits = logits.squeeze(-1)
+    prob = torch.sigmoid(logits).item()
+    return prob
+
+# ---------------------------------------------------------------------------------------- #
+# Main SelfCheckMQAG class
+
 class SelfCheckMQAG:
     def __init__(self, device=None):
         # Question Generation Systems (G1 & G2)
@@ -141,17 +255,45 @@ class SelfCheckMQAG:
         num_samples = len(sampled_passages)
         sent_scores = []
         for sentence in sentences:
-            list_of_question, list_of_options = self._question_generation(sentence, passage, num_questions_per_sent)
+
+            # Question + Choices Generation
+            questions = question_generation_sentence_level(
+                self.g1_model, self.g1_tokenizer,
+                self.g2_model, self.g2_tokenizer,
+                sentence, passage, num_questions_per_sent, self.device)
+
+            # Answering
             scores = []
-            for question, options in zip(list_of_question, list_of_options):
-                prob = self._answering(question, options, passage)
-                u_score = self._answerability_scoring(question, passage)
+            max_seq_length = 4096 # answering & answerability max length
+            for question_item in questions:
+                question, options = question_item['question'], question_item['options']
+
+                # response
+                prob = answering(
+                    self.a_model, self.a_tokenizer,
+                    question, options, passage,
+                    max_seq_length, self.device)
+
+                u_score = answerability_scoring(
+                    self.u_model, self.u_tokenizer,
+                    question, passage,
+                    max_seq_length, self.device)
 
                 prob_s = np.zeros((num_samples, 4))
                 u_score_s = np.zeros((num_samples,))
                 for si, sampled_passage in enumerate(sampled_passages):
-                    prob_s[si] = self._answering(question, options, sampled_passage)
-                    u_score_s[si] = self._answerability_scoring(question, sampled_passage)
+
+                    # sample
+                    prob_s[si] = answering(
+                        self.a_model, self.a_tokenizer,
+                        question, options, sampled_passage,
+                        max_seq_length, self.device)
+                    u_score_s[si] = answerability_scoring(
+                        self.u_model, self.u_tokenizer,
+                        question, sampled_passage,
+                        max_seq_length, self.device)
+
+                # doing comparision
                 if scoring_method == 'counting':
                     score = method_simple_counting(prob, u_score, prob_s, u_score_s, num_samples, AT=kwargs['AT'])
                 elif scoring_method == 'bayes':
@@ -161,98 +303,5 @@ class SelfCheckMQAG:
                 scores.append(score)
             sent_score = np.mean(scores)
             sent_scores.append(sent_score)
+
         return np.array(sent_scores)
-
-    def _answerability_scoring(
-            self,
-            question,
-            context,
-        ):
-        """
-        :return prob: prob -> 0.0 means unanswerable, prob -> 1.0 means answerable
-        """
-        input_text = question + ' ' + self.u_tokenizer.sep_token + ' ' + context
-        inputs = self.u_tokenizer(input_text, max_length=4096, truncation=True, return_tensors="pt")
-        inputs = inputs.to(self.device)
-        logits = self.u_model(**inputs).logits
-        logits = logits.squeeze(-1)
-        prob = torch.sigmoid(logits).item()
-        return prob
-
-    def _answering(
-            self,
-            question,
-            options,
-            context,
-        ):
-        answering_given_passage = prepare_answering_input(
-            tokenizer=self.a_tokenizer,
-            question=question,
-            options=options,
-            context=context,
-            device=self.device,
-            max_seq_length=4096,
-        )
-        answering_outputs = self.a_model(**answering_given_passage)
-        prob = torch.softmax(answering_outputs['logits'], dim=-1)[0].cpu().numpy()
-        return prob
-
-    def _question_generation(
-            self,
-            sentence,
-            passage,
-            num_questions_per_sent = 5,
-        ):
-        qa_input_ids = prepare_qa_input(
-                self.g1_tokenizer,
-                context=sentence,
-                device=self.device
-        )
-        num_valid_questions = 0
-        list_of_question, list_of_options = [], []
-        for q_ in range(num_questions_per_sent):
-            # Stage G.1: question+answer generation
-            outputs = self.g1_model.generate(
-                qa_input_ids,
-                max_new_tokens=128,
-                do_sample=True,
-            )
-            question_answer = self.g1_tokenizer.decode(outputs[0], skip_special_tokens=False)
-            question_answer = question_answer.replace(self.g1_tokenizer.pad_token, "").replace(self.g1_tokenizer.eos_token, "")
-            question_answer_split = question_answer.split(self.g1_tokenizer.sep_token)
-            if len(question_answer_split) == 2:
-                # valid Question + Annswer output
-                num_valid_questions += 1
-            else:
-                continue
-            question = question_answer_split[0].strip()
-            answer = question_answer_split[1].strip()
-
-            # Stage G.2: Distractor Generation
-            distractor_input_ids = prepare_distractor_input(
-                self.g2_tokenizer,
-                context = passage,
-                question = question,
-                answer = answer,
-                device = self.device,
-                separator = self.g2_tokenizer.sep_token,
-            )
-            outputs = self.g2_model.generate(
-                distractor_input_ids,
-                max_new_tokens=128,
-                do_sample=True,
-            )
-            distractors = self.g2_tokenizer.decode(outputs[0], skip_special_tokens=False)
-            distractors = distractors.replace(self.g2_tokenizer.pad_token, "").replace(self.g2_tokenizer.eos_token, "")
-            distractors = re.sub("<extra\S+>", self.g2_tokenizer.sep_token, distractors)
-            distractors = [y.strip() for y in distractors.split(self.g2_tokenizer.sep_token)]
-            options = [answer] + distractors
-
-            while len(options) < 4:
-                # print("Warning: options =", options)
-                options.append(options[-1])
-
-            list_of_question.append(question)
-            list_of_options.append(options)
-
-        return list_of_question, list_of_options

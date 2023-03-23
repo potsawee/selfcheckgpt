@@ -1,21 +1,17 @@
-def prepare_qa_input(t5_tokenizer, context, device, max_length=512):
+def prepare_qa_input(t5_tokenizer, context, device):
     """
         input: context
         output: question <sep> answer
     """
     encoding = t5_tokenizer(
         [context],
-        padding="longest",
-        max_length=max_length,
-        truncation=True,
         return_tensors="pt",
     )
     input_ids = encoding.input_ids.to(device)
     return input_ids
 
 
-def prepare_distractor_input(t5_tokenizer, context, question, answer,
-                            device, separator='<sep>', max_length=512):
+def prepare_distractor_input(t5_tokenizer, context, question, answer, device, separator='<sep>'):
     """
         input: question <sep> answer <sep> article
         output: distractor1 <sep> distractor2 <sep> distractor3
@@ -23,9 +19,6 @@ def prepare_distractor_input(t5_tokenizer, context, question, answer,
     input_text = question + ' ' + separator + ' ' + answer + ' ' + separator + ' ' + context
     encoding = t5_tokenizer(
         [input_text],
-        padding="longest",
-        max_length=max_length,
-        truncation=True,
         return_tensors="pt",
     )
     input_ids = encoding.input_ids.to(device)
