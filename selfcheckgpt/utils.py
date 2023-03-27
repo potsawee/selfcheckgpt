@@ -10,8 +10,8 @@ class MQAGConfig:
 # Question Generation & Answering Input Processing
 def prepare_qa_input(t5_tokenizer, context, device):
     """
-        input: context
-        output: question <sep> answer
+    input: context
+    output: question <sep> answer
     """
     encoding = t5_tokenizer(
         [context],
@@ -23,8 +23,8 @@ def prepare_qa_input(t5_tokenizer, context, device):
 
 def prepare_distractor_input(t5_tokenizer, context, question, answer, device, separator='<sep>'):
     """
-        input: question <sep> answer <sep> article
-        output: distractor1 <sep> distractor2 <sep> distractor3
+    input: question <sep> answer <sep> article
+    output: distractor1 <sep> distractor2 <sep> distractor3
     """
     input_text = question + ' ' + separator + ' ' + answer + ' ' + separator + ' ' + context
     encoding = t5_tokenizer(
@@ -36,10 +36,10 @@ def prepare_distractor_input(t5_tokenizer, context, question, answer, device, se
 
 
 def prepare_answering_input(
-        tokenizer, # longformer_tokenizer
-        question, options, context,
-        device, max_seq_length=4096,
-    ):
+    tokenizer, # longformer_tokenizer
+    question, options, context,
+    device, max_seq_length=4096,
+):
     c_plus_q = context + ' ' + tokenizer.bos_token + ' ' + question
     c_plus_q_4 = [c_plus_q] * len(options)
 

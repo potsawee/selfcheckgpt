@@ -14,12 +14,12 @@ from selfcheckgpt.modeling_mqag import question_generation_sentence_level, answe
 # ---------------------------------------------------------------------------------------- #
 # Functions for counting
 def method_simple_counting(
-        prob,
-        u_score,
-        prob_s,
-        u_score_s,
-        num_samples,
-        AT,
+    prob,
+    u_score,
+    prob_s,
+    u_score_s,
+    num_samples,
+    AT,
 ):
     """
     simple counting method score => count_mismatch / (count_match + count_mismatch)
@@ -43,12 +43,12 @@ def method_simple_counting(
     return score
 
 def method_vanilla_bayes(
-        prob,
-        u_score,
-        prob_s,
-        u_score_s,
-        num_samples,
-        beta1, beta2, AT,
+    prob,
+    u_score,
+    prob_s,
+    u_score_s,
+    num_samples,
+    beta1, beta2, AT,
 ):
     """
     (vanilla) bayes method score: compute P(sentence is non-factual | count_match, count_mismatch)
@@ -71,12 +71,12 @@ def method_vanilla_bayes(
     return score
 
 def method_bayes_with_alpha(
-        prob,
-        u_score,
-        prob_s,
-        u_score_s,
-        num_samples,
-        beta1, beta2,
+    prob,
+    u_score,
+    prob_s,
+    u_score_s,
+    num_samples,
+    beta1, beta2,
 ):
     """
     bayes method (with answerability score, i.e. soft-counting) score
@@ -97,12 +97,12 @@ def method_bayes_with_alpha(
     return score
 
 def answerability_scoring(
-        u_model,
-        u_tokenizer,
-        question,
-        context,
-        max_length,
-        device,
+    u_model,
+    u_tokenizer,
+    question,
+    context,
+    max_length,
+    device,
 ):
     """
     :return prob: prob -> 0.0 means unanswerable, prob -> 1.0 means answerable
@@ -163,13 +163,13 @@ class SelfCheckMQAG:
 
     @torch.no_grad()
     def predict(
-            self,
-            sentences: List[str],
-            passage: str,
-            sampled_passages: List[str],
-            num_questions_per_sent: int = 5,
-            scoring_method: str = "bayes_with_alpha",
-            **kwargs,
+        self,
+        sentences: List[str],
+        passage: str,
+        sampled_passages: List[str],
+        num_questions_per_sent: int = 5,
+        scoring_method: str = "bayes_with_alpha",
+        **kwargs,
     ):
         """
         This function takes sentences (to be evaluated) with sampled passages (evidence), and return sent-level scores
@@ -244,9 +244,9 @@ class SelfCheckBERTScore:
 
     @torch.no_grad()
     def predict(
-            self,
-            sentences: List[str],
-            sampled_passages: List[str],
+        self,
+        sentences: List[str],
+        sampled_passages: List[str],
     ):
         """
         This function takes sentences (to be evaluated) with sampled passages (evidence), and return sent-level scores

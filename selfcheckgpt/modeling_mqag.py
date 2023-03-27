@@ -10,14 +10,14 @@ from selfcheckgpt.utils import MQAGConfig, get_prob_distances
 # ---------------------------------------------------------------------------------------- #
 # Functions for Question Generation & Answering
 def question_generation_sentence_level(
-        g1_model,
-        g1_tokenizer,
-        g2_model,
-        g2_tokenizer,
-        sentence,
-        passage,
-        num_questions_per_sent,
-        device,
+    g1_model,
+    g1_tokenizer,
+    g2_model,
+    g2_tokenizer,
+    sentence,
+    passage,
+    num_questions_per_sent,
+    device,
 ):
     qa_input_ids = prepare_qa_input(
             g1_tokenizer,
@@ -77,13 +77,13 @@ def question_generation_sentence_level(
 
 
 def question_generation_sampling(
-        g1_model,
-        g1_tokenizer,
-        g2_model,
-        g2_tokenizer,
-        context,
-        num_questions,
-        device,
+    g1_model,
+    g1_tokenizer,
+    g2_model,
+    g2_tokenizer,
+    context,
+    num_questions,
+    device,
 ):
     qa_input_ids = prepare_qa_input(
             g1_tokenizer,
@@ -144,18 +144,18 @@ def question_generation_sampling(
     return questions
 
 def question_generation_beamsearch(
-        g1_model,
-        g1_tokenizer,
-        g2_model,
-        g2_tokenizer,
-        context,
-        num_beams,
-        device,
+    g1_model,
+    g1_tokenizer,
+    g2_model,
+    g2_tokenizer,
+    context,
+    num_beams,
+    device,
 ):
     qa_input_ids = prepare_qa_input(
-            g1_tokenizer,
-            context=context,
-            device=device,
+        g1_tokenizer,
+        context=context,
+        device=device,
     )
     # Stage G.1: question+answer generation
     outputs = g1_model.generate(
@@ -206,13 +206,13 @@ def question_generation_beamsearch(
 
 
 def answering(
-        a_model,
-        a_tokenizer,
-        question,
-        options,
-        context,
-        max_seq_length,
-        device,
+    a_model,
+    a_tokenizer,
+    question,
+    options,
+    context,
+    max_seq_length,
+    device,
 ):
     answering_given_passage = prepare_answering_input(
         tokenizer=a_tokenizer,
