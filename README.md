@@ -56,6 +56,15 @@ Both `SelfCheckMQAG()` and `SelfCheckBERTScore()` have `predict()` which will ou
 [0.0099323  0.08978583]
 ```
 
+## Experiments
+
+**Non-Factual\*** referes to less-trivial hallucination detection, i.e. we only consider sentences which have average hallucination score < 0.75 (more details in the *Data and Annotation* section in our paper)
+
+### Probability-based baselines (e.g. GPT-3's probabilities)
+
+As described in our paper, probabities (and generation entropies) of the generative LLM can be used to measure its confidence. Check our example/implementation of this approach in [```demo/experiments/probability-based-baselines.ipynb```](demo/experiments/probability-based-baselines.ipynb)
+
+
 ## Dataset
 The `wiki_bio_gpt3_hallucination` dataset currently consists of 65 annotated passages. You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
 
