@@ -10,6 +10,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import LongformerTokenizer, LongformerForMultipleChoice, LongformerForSequenceClassification
 from selfcheckgpt.utils import MQAGConfig, expand_list1, expand_list2
 from selfcheckgpt.modeling_mqag import question_generation_sentence_level, answering
+from selfcheckgpt.modeling_ngram import UnigramModelSentenceLevel
 
 # ---------------------------------------------------------------------------------------- #
 # Functions for counting
@@ -276,3 +277,22 @@ class SelfCheckBERTScore:
         bertscore_mean_per_sent = bertscore_array.mean(axis=-1)
         one_minus_bertscore_mean_per_sent = 1.0 - bertscore_mean_per_sent
         return one_minus_bertscore_mean_per_sent
+
+class SelfCheckUnigram:
+    def __init__(self, lowercase: bool = True):
+        self.lowercase = lowercase
+        print("SelfCheck-Unigram initialized")
+
+    def predict(
+        self,
+        sentences: List[str],
+        passage: str,
+        sampled_passages: List[str],
+    ):
+        unigram_model = UnigramModelSentenceLevel(lowercase=self.lowercase)
+        unigram_model.add(passage)
+        for sampled_passge in sampled_passages:
+            unigram_model.add(sampled_passge)
+        unigram_model.train(k=0)
+        unigram_pred = unigram_model.evaluate(sentences)
+        return unigram_pred
