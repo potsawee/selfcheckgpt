@@ -66,7 +66,10 @@ As described in our paper, probabities (and generation entropies) of the generat
 
 
 ## Dataset
-The `wiki_bio_gpt3_hallucination` dataset currently consists of 65 annotated passages. You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
+The `wiki_bio_gpt3_hallucination` dataset currently consists of 142 annotated passages (`v2`). You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
+
+### Update
+We've annotated GPT-3 wikibio passages further, and now (`v2` 6 April 2023) the dataset consists of 142 annotated passages. Here is [the link](https://drive.google.com/file/d/1N3_ZQmr9yBbsOP2JCpgiea9oiNIu78Xw/view?usp=sharing) for the IDs of the 65 passages in the `v1`. 
 
 ### Option1: HuggingFace
 
@@ -76,7 +79,7 @@ dataset = load_dataset("potsawee/wiki_bio_gpt3_hallucination")
 ```
 
 ### Option2: Manual Download
-Download from our [Google Drive](https://drive.google.com/drive/folders/1-45BC-AZQQtxIuaWSFcT-XQ-nUvq0zZB?usp=sharing), then you can load it in python:
+Download from our [Google Drive](https://drive.google.com/file/d/1_BSZ-tpSVeui9sRDUGMbS3vVISy_SQHF/view?usp=share_link), then you can load it in python:
 
 ```python
 import json
@@ -91,6 +94,7 @@ Each instance consists of:
 - `gpt3_sentences`: `gpt3_text` split into sentences using `spacy`
 - `annotation`: human annotation at the sentence level
 -  `wiki_bio_test_idx`: ID of the concept/individual from the original wikibio dataset (testset)
+-  `gpt3_text_samples`: list of sampled passages (do_sample = True & temperature = 1.0)
 
 ## Miscellaneous
 [MQAG (Multiple-choice Question Answering and Generation)](https://arxiv.org/abs/2301.12307) was proposed in our previous work. Our MQAG implementation is included in this package, which can be used to: (1) generate multiple-choice questions, (2) answer multiple-choice questions, (3) obtain MQAG score.
