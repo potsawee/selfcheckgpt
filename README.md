@@ -1,6 +1,7 @@
 SelfCheckGPT
 =====================================================
-Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
+- Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
+- The paper on arxiv has recently been updated on 5 May 2023 to include SelfCheckGPT with n-gram experiments, and the dataset has been annotated further to include 238 passages.  
 
 ![](demo/diagram.drawio.png)
 
@@ -58,18 +59,16 @@ Both `SelfCheckMQAG()` and `SelfCheckBERTScore()` have `predict()` which will ou
 
 ## Experiments
 
-**Non-Factual\*** referes to less-trivial hallucination detection, i.e. we only consider sentences which have average hallucination score < 0.75 (more details in the *Data and Annotation* section in our paper)
-
 ### Probability-based baselines (e.g. GPT-3's probabilities)
 
 As described in our paper, probabities (and generation entropies) of the generative LLM can be used to measure its confidence. Check our example/implementation of this approach in [```demo/experiments/probability-based-baselines.ipynb```](demo/experiments/probability-based-baselines.ipynb)
 
 
 ## Dataset
-The `wiki_bio_gpt3_hallucination` dataset currently consists of 142 annotated passages (`v2`). You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
+The `wiki_bio_gpt3_hallucination` dataset currently consists of 238 annotated passages (`v3`). You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
 
 ### Update
-We've annotated GPT-3 wikibio passages further, and now (`v2` 6 April 2023) the dataset consists of 142 annotated passages. Here is [the link](https://drive.google.com/file/d/1N3_ZQmr9yBbsOP2JCpgiea9oiNIu78Xw/view?usp=sharing) for the IDs of the 65 passages in the `v1`. 
+We've annotated GPT-3 wikibio passages further, and now the dataset consists of 238 annotated passages. Here is [the link](https://drive.google.com/file/d/1N3_ZQmr9yBbsOP2JCpgiea9oiNIu78Xw/view?usp=sharing) for the IDs of the first 65 passages in the `v1`. 
 
 ### Option1: HuggingFace
 
@@ -79,7 +78,7 @@ dataset = load_dataset("potsawee/wiki_bio_gpt3_hallucination")
 ```
 
 ### Option2: Manual Download
-Download from our [Google Drive](https://drive.google.com/file/d/1_BSZ-tpSVeui9sRDUGMbS3vVISy_SQHF/view?usp=share_link), then you can load it in python:
+Download from our [Google Drive](https://drive.google.com/file/d/1AyQ7u9nYlZgUZLm5JBDx6cFFWB__EsNv/view?usp=share_link), then you can load it in python:
 
 ```python
 import json
