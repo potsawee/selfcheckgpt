@@ -10,6 +10,7 @@ REQUIREMENTS = [
     "numpy",
     "bert_score",
     "spacy",
+    "nltk",
 ]
 
 # some more details
