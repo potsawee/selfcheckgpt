@@ -43,10 +43,10 @@ class UnigramModel:
 
     def evaluate(self, sentences: List[str]) -> float:
         """
-        Calculate the average log likelihood of the model on the evaluation sentences
+        Calculate the negative log likelihood of the model on the evaluation sentences
         """
-        average_logprob = []
-        lowest_logprob = []
+        avg_neg_logprob = []
+        max_neg_logprob = []
         logprob_doc = [] # for computing Average at document-level, i.e. Avg(Tokens)
         for sentence in sentences:
             logprob_sent = []
@@ -62,13 +62,13 @@ class UnigramModel:
                 logprob = np.log(train_prob)
                 logprob_sent.append(logprob)
                 logprob_doc.append(logprob)
-            average_logprob += [np.mean(logprob_sent)]
-            lowest_logprob += [np.min(logprob_sent)]
-        average_logprob_doc = np.mean(logprob_doc)
-        average_lowest_logprob_doc = np.mean(lowest_logprob)
+            avg_neg_logprob += [-1.0 * np.mean(logprob_sent)]
+            max_neg_logprob += [-1.0 * np.min(logprob_sent)]
+        avg_neg_logprob_doc = -1.0 * np.mean(logprob_doc)
+        avg_max_neg_logprob_doc = np.mean(max_neg_logprob)
         return {
-            'sent_level': {'avg_logprob': average_logprob, 'min_logprob': lowest_logprob},
-            'doc_level': {'avg_logprob': average_logprob_doc, 'avg_min_logprob': average_lowest_logprob_doc},
+            'sent_level': {'avg_neg_logprob': avg_neg_logprob, 'max_neg_logprob': max_neg_logprob},
+            'doc_level': {'avg_neg_logprob': avg_neg_logprob_doc, 'avg_max_neg_logprob': avg_max_neg_logprob_doc},
         }
 
 class NgramModel:
@@ -114,11 +114,11 @@ class NgramModel:
 
     def evaluate(self, sentences: List[str]) -> float:
         """
-        Calculate the average log likelihood of the model on the evaluation sentences
+        Calculate the negative log likelihood of the model on the evaluation sentences
         """
-        average_logprob = []
-        lowest_logprob = []
-        logprob_doc = []
+        avg_neg_logprob = []
+        max_neg_logprob = []
+        logprob_doc = [] # for computing Average at document-level, i.e. Avg(Tokens)
         for sentence in sentences:
             logprob_sent = []
             tokens = [token.text for token in self.nlp(sentence)]
@@ -140,11 +140,11 @@ class NgramModel:
                 # }
                 logprob_sent.append(logprob)
                 logprob_doc.append(logprob)
-            average_logprob += [np.mean(logprob_sent)]
-            lowest_logprob += [np.min(logprob_sent)]
-        average_logprob_doc = np.mean(logprob_doc)
-        average_lowest_logprob_doc = np.mean(lowest_logprob)
+            avg_neg_logprob += [-1.0 * np.mean(logprob_sent)]
+            max_neg_logprob += [-1.0 * np.min(logprob_sent)]
+        avg_neg_logprob_doc = -1.0 * np.mean(logprob_doc)
+        avg_max_neg_logprob_doc = np.mean(max_neg_logprob)
         return {
-            'sent_level': {'avg_logprob': average_logprob, 'min_logprob': lowest_logprob},
-            'doc_level': {'avg_logprob': average_logprob_doc, 'avg_min_logprob': average_lowest_logprob_doc},
+            'sent_level': {'avg_neg_logprob': avg_neg_logprob, 'max_neg_logprob': max_neg_logprob},
+            'doc_level': {'avg_neg_logprob': avg_neg_logprob_doc, 'avg_max_neg_logprob': avg_max_neg_logprob_doc},
         }
