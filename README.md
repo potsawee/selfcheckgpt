@@ -13,13 +13,14 @@ SelfCheckGPT
 
 ### SelfCheckGPT Usage
 
-Both `SelfCheckMQAG()` and `SelfCheckBERTScore()` have `predict()` which will output the sentence-level scores w.r.t. sampled passages. You can use packages such as spacy to split passage into sentences. For reproducibility, you can set `torch.manual_seed` before calling this function. See more details in Jupyter Notebook [```demo/SelfCheck_demo1.ipynb```](demo/SelfCheck_demo1.ipynb)
+There are three variants of SelfCheck scores as described in the paper: `SelfCheckMQAG()`, `SelfCheckBERTScore()`, `SelfCheckNgram()`. All of the variants have `predict()` which will output the sentence-level scores w.r.t. sampled passages. You can use packages such as spacy to split passage into sentences. For reproducibility, you can set `torch.manual_seed` before calling this function. See more details in Jupyter Notebook [```demo/SelfCheck_demo1.ipynb```](demo/SelfCheck_demo1.ipynb)
 
 ```python
 # Include necessary packages (torch, spacy, ...)
 >>> from selfcheckgpt.modeling_selfcheck import SelfCheckMQAG, SelfCheckBERTScore
 >>> selfcheck_mqag = SelfCheckMQAG() # set device to 'cuda' if GPU is available
 >>> selfcheck_bertscore = SelfCheckBERTScore()
+>>> selfcheck_ngram = SelfCheckNgram(n=1) # n=1 means Unigram, n=2 means Bigram, etc.
 
 # LLM's text (e.g. GPT-3 response) to be evaluated at the sentence level  & Split it into sentences
 >>> passage = "Michael Alan Weiner (born March 31, 1942) is an American radio host. He is the host of The Savage Nation."
@@ -32,6 +33,7 @@ Both `SelfCheckMQAG()` and `SelfCheckBERTScore()` have `predict()` which will ou
 >>> sample2 = "Michael Alan Weiner (born January 13, 1960) is a Canadian radio host. He works at The New York Times."
 >>> sample3 = "Michael Alan Weiner (born March 31, 1942) is an American radio host. He obtained his PhD from MIT."
 
+# --------------------------------------------------------------------------------------------------------------- #
 # SelfCheck-MQAG: Score for each sentence where value is in [0.0, 1.0] and high value means non-factual
 # Additional params for each scoring_method:
 # -> counting: AT (answerability threshold, i.e. questions with answerability_score < AT are rejected)
@@ -48,6 +50,7 @@ Both `SelfCheckMQAG()` and `SelfCheckBERTScore()` have `predict()` which will ou
 >>> print(sent_scores_mqag)
 [0.30990949 0.42376232]
 
+# --------------------------------------------------------------------------------------------------------------- #
 # SelfCheck-BERTScore: Score for each sentence where value is in [0.0, 1.0] and high value means non-factual
 >>> sent_scores_bertscore = selfcheck_bertscore.predict(
         sentences = sentences,                          # list of sentences
@@ -55,6 +58,25 @@ Both `SelfCheckMQAG()` and `SelfCheckBERTScore()` have `predict()` which will ou
     )
 >>> print(sent_scores_bertscore)
 [0.0099323  0.08978583]
+
+# --------------------------------------------------------------------------------------------------------------- #
+# SelfCheck-Ngram: Score at sentence- and document-level where value is in [0.0, +inf) and high value means non-factual
+# as opposed to SelfCheck-MQAG and SelfCheck-BERTScore, SelfCheck-Ngram's score is not bounded
+>>> sent_scores_ngram = = selfcheck_ngram.predict(
+        sentences = sentences,   
+        passage = passage,
+        sampled_passages = [sample1, sample2, sample3], 
+    )
+>>> print(sent_scores_ngram)
+{'sent_level': { # sentence-level score similar to MQAG and BERTScore variant 
+    'avg_neg_logprob': [3.184312, 3.279774], 
+    'max_neg_logprob': [3.476098, 4.574710]
+    }, 
+ 'doc_level': {  # document-level score such that avg_neg_logprob is computed over all tokens
+    'avg_neg_logprob': 3.218678904916201, 
+    'avg_max_neg_logprob': 4.025404834169327
+    }
+}
 ```
 
 ## Experiments
