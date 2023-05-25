@@ -10,7 +10,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import LongformerTokenizer, LongformerForMultipleChoice, LongformerForSequenceClassification
 from selfcheckgpt.utils import MQAGConfig, expand_list1, expand_list2
 from selfcheckgpt.modeling_mqag import question_generation_sentence_level, answering
-from selfcheckgpt.modeling_ngram import UnigramModelSentenceLevel
+from selfcheckgpt.modeling_ngram import UnigramModel, NgramModel
 
 # ---------------------------------------------------------------------------------------- #
 # Functions for counting
@@ -278,10 +278,19 @@ class SelfCheckBERTScore:
         one_minus_bertscore_mean_per_sent = 1.0 - bertscore_mean_per_sent
         return one_minus_bertscore_mean_per_sent
 
-class SelfCheckUnigram:
-    def __init__(self, lowercase: bool = True):
+class SelfCheckNgram:
+    """
+    SelfCheckGPT (Ngram variant): Checking LLM's text against its own sampled texts via ngram model
+    Note that this variant of SelfCheck score is not bounded in [0.0, 1.0]
+    """
+    def __init__(self, n: int, lowercase: bool = True):
+        """
+        :param n: n-gram model, n=1 is Unigram, n=2 is Bigram, etc.
+        :param lowercase: whether or not to lowercase when counting n-grams
+        """
+        self.n = n
         self.lowercase = lowercase
-        print("SelfCheck-Unigram initialized")
+        print(f"SelfCheck-{n}gram initialized")
 
     def predict(
         self,
@@ -289,10 +298,15 @@ class SelfCheckUnigram:
         passage: str,
         sampled_passages: List[str],
     ):
-        unigram_model = UnigramModelSentenceLevel(lowercase=self.lowercase)
-        unigram_model.add(passage)
+        if self.n == 1:
+            ngram_model = UnigramModel(lowercase=self.lowercase)
+        elif self.n > 1:
+            ngram_model = NgramModel(n=self.n, lowercase=self.lowercase)
+        else:
+            raise ValueError("n must be integer >= 1")
+        ngram_model.add(passage)
         for sampled_passge in sampled_passages:
-            unigram_model.add(sampled_passge)
-        unigram_model.train(k=0)
-        unigram_pred = unigram_model.evaluate(sentences)
-        return unigram_pred
+            ngram_model.add(sampled_passge)
+        ngram_model.train(k=0)
+        ngram_pred = ngram_model.evaluate(sentences)
+        return ngram_pred
