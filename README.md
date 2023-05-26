@@ -62,7 +62,7 @@ print(sent_scores_bertscore)
 # --------------------------------------------------------------------------------------------------------------- #
 # SelfCheck-Ngram: Score at sentence- and document-level where value is in [0.0, +inf) and high value means non-factual
 # as opposed to SelfCheck-MQAG and SelfCheck-BERTScore, SelfCheck-Ngram's score is not bounded
-sent_scores_ngram = = selfcheck_ngram.predict(
+sent_scores_ngram = selfcheck_ngram.predict(
     sentences = sentences,   
     passage = passage,
     sampled_passages = [sample1, sample2, sample3], 
