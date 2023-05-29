@@ -18,7 +18,7 @@ def main(
     print("loaded:", llm_model)
 
     dataset = load_dataset("potsawee/wiki_bio_gpt3_hallucination")
-    dataset = dataset['train']
+    dataset = dataset['evaluation']
     passages = dataset['gpt3_text']
 
     for idx, passage in enumerate(passages):
