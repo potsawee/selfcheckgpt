@@ -65,15 +65,15 @@ print(sent_scores_bertscore)
 sent_scores_ngram = selfcheck_ngram.predict(
     sentences = sentences,   
     passage = passage,
-    sampled_passages = [sample1, sample2, sample3], 
+    sampled_passages = [sample1, sample2, sample3],
 )
 print(sent_scores_ngram)
-# {'sent_level': { # sentence-level score similar to MQAG and BERTScore variant 
-#     'avg_neg_logprob': [3.184312, 3.279774], 
+# {'sent_level': { # sentence-level score similar to MQAG and BERTScore variant
+#     'avg_neg_logprob': [3.184312, 3.279774],
 #     'max_neg_logprob': [3.476098, 4.574710]
-#     }, 
+#     },
 #  'doc_level': {  # document-level score such that avg_neg_logprob is computed over all tokens
-#     'avg_neg_logprob': 3.218678904916201, 
+#     'avg_neg_logprob': 3.218678904916201,
 #     'avg_max_neg_logprob': 4.025404834169327
 #     }
 # }
@@ -91,7 +91,7 @@ As described in our paper, probabities (and generation entropies) of the generat
 The `wiki_bio_gpt3_hallucination` dataset currently consists of 238 annotated passages (`v3`). You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
 
 ### Update
-We've annotated GPT-3 wikibio passages further, and now the dataset consists of 238 annotated passages. Here is [the link](https://drive.google.com/file/d/1N3_ZQmr9yBbsOP2JCpgiea9oiNIu78Xw/view?usp=sharing) for the IDs of the first 65 passages in the `v1`. 
+We've annotated GPT-3 wikibio passages further, and now the dataset consists of 238 annotated passages. Here is [the link](https://drive.google.com/file/d/1N3_ZQmr9yBbsOP2JCpgiea9oiNIu78Xw/view?usp=sharing) for the IDs of the first 65 passages in the `v1`.
 
 ### Option1: HuggingFace
 
@@ -132,6 +132,7 @@ It has three main functions: `generate()`, `answer()`, `score()`. We show an exa
 
 ## Acknowledgements
 This work is supported by Cambridge University Press & Assessment (CUP&A), a department of The Chancellor, Masters, and Scholars of the University of Cambridge, and the Cambridge Commonwealth, European & International Trust.
+
 ## Citation
 
 ```
