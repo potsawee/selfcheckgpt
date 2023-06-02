@@ -79,14 +79,6 @@ print(sent_scores_ngram)
 # }
 ```
 
-
-## Experiments
-
-### Probability-based baselines (e.g. GPT-3's probabilities)
-
-As described in our paper, probabities (and generation entropies) of the generative LLM can be used to measure its confidence. Check our example/implementation of this approach in [```demo/experiments/probability-based-baselines.ipynb```](demo/experiments/probability-based-baselines.ipynb)
-
-
 ## Dataset
 The `wiki_bio_gpt3_hallucination` dataset currently consists of 238 annotated passages (`v3`). You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
 
@@ -117,6 +109,26 @@ Each instance consists of:
 - `annotation`: human annotation at the sentence level
 -  `wiki_bio_test_idx`: ID of the concept/individual from the original wikibio dataset (testset)
 -  `gpt3_text_samples`: list of sampled passages (do_sample = True & temperature = 1.0)
+
+## Experiments
+
+### Probability-based baselines (e.g. GPT-3's probabilities)
+
+As described in our paper, probabities (and generation entropies) of the generative LLM can be used to measure its confidence. Check our example/implementation of this approach in [```demo/experiments/probability-based-baselines.ipynb```](demo/experiments/probability-based-baselines.ipynb)
+
+### Experimental Results
+- Full details can be found in our paper. 
+- Note that our new results show that LLMs such as GPT-3 (text-davinci-003) or ChatGPT (gpt-3.5-turbo) are good at text inconsistency assessment. Based on this finding, we try **SelfCheckGPT-Prompt** where each sentence (to be evaluated) is compared against each and every sampled_passage by prompting ChatGPT. SelfCheckGPT-Prompt is the best-performing method.
+
+Results on the `wiki_bio_gpt3_hallucination` dataset.
+
+| Method               | NonFact (sent-lvl) | Factual (sent-lvl) | PCC (passage-lvl) |
+|----------------------|:------------------:|:------------------:|:-----------------:|
+| GPT-3 Avg(-logP)     |        83.21       |        53.97       |       57.04       |
+| SelfCheck-BERTScore  |        81.96       |        44.23       |       58.18       |
+| SelfCheck-QA         |        84.26       |        48.14       |       61.07       |
+| SelfCheck-Unigram    |        85.63       |        58.47       |       64.71       |
+| **SelfCheck-Prompt** |      **93.42**     |      **67.09**     |     **78.32**     |
 
 ## Miscellaneous
 [MQAG (Multiple-choice Question Answering and Generation)](https://arxiv.org/abs/2301.12307) was proposed in our previous work. Our MQAG implementation is included in this package, which can be used to: (1) generate multiple-choice questions, (2) answer multiple-choice questions, (3) obtain MQAG score.
