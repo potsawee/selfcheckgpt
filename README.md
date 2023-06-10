@@ -14,11 +14,11 @@ SelfCheckGPT
 
 ### SelfCheckGPT Usage
 
-There are three variants of SelfCheck scores as described in the paper: `SelfCheckMQAG()`, `SelfCheckBERTScore()`, `SelfCheckNgram()`. All of the variants have `predict()` which will output the sentence-level scores w.r.t. sampled passages. You can use packages such as spacy to split passage into sentences. For reproducibility, you can set `torch.manual_seed` before calling this function. See more details in Jupyter Notebook [```demo/SelfCheck_demo1.ipynb```](demo/SelfCheck_demo1.ipynb)
+There are three variants of SelfCheck scores in this package as described in the paper: `SelfCheckMQAG()`, `SelfCheckBERTScore()`, `SelfCheckNgram()`. All of the variants have `predict()` which will output the sentence-level scores w.r.t. sampled passages. You can use packages such as spacy to split passage into sentences. For reproducibility, you can set `torch.manual_seed` before calling this function. See more details in Jupyter Notebook [```demo/SelfCheck_demo1.ipynb```](demo/SelfCheck_demo1.ipynb)
 
 ```python
 # Include necessary packages (torch, spacy, ...)
-from selfcheckgpt.modeling_selfcheck import SelfCheckMQAG, SelfCheckBERTScore
+from selfcheckgpt.modeling_selfcheck import SelfCheckMQAG, SelfCheckBERTScore, SelfCheckNgram
 selfcheck_mqag = SelfCheckMQAG() # set device to 'cuda' if GPU is available
 selfcheck_bertscore = SelfCheckBERTScore()
 selfcheck_ngram = SelfCheckNgram(n=1) # n=1 means Unigram, n=2 means Bigram, etc.
