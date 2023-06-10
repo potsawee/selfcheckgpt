@@ -2,8 +2,9 @@ SelfCheckGPT
 =====================================================
 - Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
 - The paper has recently been updated on arxiv on 8 May 2023 to include SelfCheckGPT with n-gram experiments, proxy LLM approach with LLaMA, and the dataset has been annotated further to include 238 passages.  
+- We investigated 4 variants of the selfcheck approach: BERTScore, QA, n-gram, and Prompt.  
 
-![](demo/diagram.drawio.png)
+![](demo/selfcheck_qa_prompt.png)
 
 ## Code/Package
 
