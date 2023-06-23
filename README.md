@@ -12,9 +12,9 @@ SelfCheckGPT
 
     pip install selfcheckgpt
 
-### SelfCheckGPT Usage
+### SelfCheckGPT Usage: BERTScore, QA, n-gram
 
-There are three variants of SelfCheck scores in this package as described in the paper: `SelfCheckMQAG()`, `SelfCheckBERTScore()`, `SelfCheckNgram()`. All of the variants have `predict()` which will output the sentence-level scores w.r.t. sampled passages. You can use packages such as spacy to split passage into sentences. For reproducibility, you can set `torch.manual_seed` before calling this function. See more details in Jupyter Notebook [```demo/SelfCheck_demo1.ipynb```](demo/SelfCheck_demo1.ipynb)
+There are three variants of SelfCheck scores in this package as described in the paper: `SelfCheckBERTScore()`, `SelfCheckMQAG()`, `SelfCheckNgram()`. All of the variants have `predict()` which will output the sentence-level scores w.r.t. sampled passages. You can use packages such as spacy to split passage into sentences. For reproducibility, you can set `torch.manual_seed` before calling this function. See more details in Jupyter Notebook [```demo/SelfCheck_demo1.ipynb```](demo/SelfCheck_demo1.ipynb)
 
 ```python
 # Include necessary packages (torch, spacy, ...)
@@ -79,6 +79,19 @@ print(sent_scores_ngram)
 #     }
 # }
 ```
+
+### SelfCheckGPT Usage: (LLM) Prompt
+
+In addition, we've tried using LLMs to assess information consistency in a zero-shot setup. We query a LLM to assess whether the i-th sentence is supported by the sample (as the context) using the following prompt.
+
+```
+Context: {}
+Sentence: {}
+Is the sentence supported by the context above? 
+Answer Yes or No:
+```
+
+Initial investigation showed that GPT-3 (text-davinci-003) will output either Yes or No 98% of the time, while any remaining outputs can be set to N/A. The output is converted to score: Yes -> 0.0, No -> 1.0, N/A -> 0.5. The inconsistency score is then calculated by averaging.
 
 ## Dataset
 The `wiki_bio_gpt3_hallucination` dataset currently consists of 238 annotated passages (`v3`). You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
