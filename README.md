@@ -1,9 +1,9 @@
 SelfCheckGPT
 =====================================================
 - Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
-- The paper has recently been updated on arxiv on 8 May 2023 to include SelfCheckGPT with n-gram experiments, proxy LLM approach with LLaMA, and the dataset has been annotated further to include 238 passages.  
-- We investigated 4 variants of the selfcheck approach: BERTScore, QA, n-gram, and Prompt.  
-
+- We investigated 4 variants of the selfcheck approach: BERTScore, QA, n-gram, and LLM-Prompt.  
+- [04/07/2023] Additional experiments show that using an entailment classifier (e.g. DeBERTa fine-tined on Multi-NLI) is better than BERTScore, QA, n-gram but worse than LLM-prompting. This method though requires considerably less computation than using LLM-prompt. We will soon add SelfCheck-NLI into this package.
+  
 ![](demo/selfcheck_qa_prompt.png)
 
 ## Code/Package
