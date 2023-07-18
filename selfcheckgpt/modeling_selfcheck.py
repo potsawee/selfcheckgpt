@@ -8,7 +8,8 @@ logging.set_verbosity_error()
 
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import LongformerTokenizer, LongformerForMultipleChoice, LongformerForSequenceClassification
-from selfcheckgpt.utils import MQAGConfig, expand_list1, expand_list2
+from transformers import DebertaV2ForSequenceClassification, DebertaV2Tokenizer
+from selfcheckgpt.utils import MQAGConfig, expand_list1, expand_list2, NLIConfig
 from selfcheckgpt.modeling_mqag import question_generation_sentence_level, answering
 from selfcheckgpt.modeling_ngram import UnigramModel, NgramModel
 
@@ -310,3 +311,55 @@ class SelfCheckNgram:
         ngram_model.train(k=0)
         ngram_pred = ngram_model.evaluate(sentences)
         return ngram_pred
+
+class SelfCheckNLI:
+    """
+    SelfCheckGPT (NLI variant): Checking LLM's text against its own sampled texts via DeBERTa-v3 finetuned to Multi-NLI
+    """
+    def __init__(
+        self,
+        nli_model: str = None,
+        device = None
+    ):
+        nli_model = nli_model if nli_model is not None else NLIConfig.nli_model
+        self.tokenizer = DebertaV2Tokenizer.from_pretrained(nli_model)
+        self.model = DebertaV2ForSequenceClassification.from_pretrained(nli_model)
+        self.model.eval()
+        if device is None:
+            device = torch.device("cpu")
+        self.model.to(device)
+        self.device = device
+        print("SelfCheck-NLI initialized to device", device)
+
+    @torch.no_grad()
+    def predict(
+        self,
+        sentences: List[str],
+        sampled_passages: List[str],
+    ):
+        """
+        This function takes sentences (to be evaluated) with sampled passages (evidence), and return sent-level scores
+        :param sentences: list[str] -- sentences to be evaluated, e.g. GPT text response spilt by spacy
+        :param sampled_passages: list[str] -- stochastically generated responses (without sentence splitting)
+        :return sent_scores: sentence-level score which is P(condict|sentence, sample)
+        note that we normalize the probability on "entailment" or "contradiction" classes only
+        and the score is the probability of the "contradiction" class
+        """
+        num_sentences = len(sentences)
+        num_samples = len(sampled_passages)
+        scores = np.zeros((num_sentences, num_samples))
+        for sent_i, sentence in enumerate(sentences):
+            for sample_i, sample in enumerate(sampled_passages):
+                inputs = self.tokenizer.batch_encode_plus(
+                    batch_text_or_text_pairs=[(sentence, sample)],
+                    add_special_tokens=True, padding="longest",
+                    truncation=True, return_tensors="pt",
+                    return_token_type_ids=True, return_attention_mask=True,
+                )
+                inputs = inputs.to(self.device)
+                logits = self.model(**inputs).logits # neutral is already removed
+                probs = torch.softmax(logits, dim=-1)
+                prob_ = probs[0][1].item() # prob(contradiction)
+                scores[sent_i, sample_i] = prob_
+        scores_per_sentence = scores.mean(axis=-1)
+        return scores_per_sentence

@@ -7,6 +7,9 @@ class MQAGConfig:
     answering: str = "potsawee/longformer-large-4096-answering-race"
     answerability: str = "potsawee/longformer-large-4096-answerable-squad2"
 
+class NLIConfig:
+    nli_model: str = "potsawee/deberta-v3-large-mnli"
+
 # Question Generation & Answering Input Processing
 def prepare_qa_input(t5_tokenizer, context, device):
     """
