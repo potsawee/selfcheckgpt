@@ -1,9 +1,9 @@
 SelfCheckGPT
 =====================================================
 - Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
-- We investigated 4 variants of the selfcheck approach: BERTScore, QA, n-gram, and LLM-Prompt.  
-- [04/07/2023] Additional experiments show that using an entailment classifier (e.g. DeBERTa fine-tined on Multi-NLI) is better than BERTScore, QA, n-gram but worse than LLM-prompting. This method though requires considerably less computation than using LLM-prompt. We will soon add SelfCheck-NLI into this package.
-  
+- We investigated several variants of the selfcheck approach: BERTScore, QA, n-gram, and LLM-Prompting.  
+- [18/07/2023] SelfCheck-NLI is added. Additional experiments show that using an entailment classifier (e.g. DeBERTa fine-tuned on Multi-NLI) performs well (see the results in the table below). SelfCheck-NLI method though requires considerably less computation than SelfCheck with LLM-prompting.
+
 ![](demo/selfcheck_qa_prompt.png)
 
 ## Code/Package
@@ -20,7 +20,7 @@ There are three variants of SelfCheck scores in this package as described in the
 # Include necessary packages (torch, spacy, ...)
 from selfcheckgpt.modeling_selfcheck import SelfCheckMQAG, SelfCheckBERTScore, SelfCheckNgram
 selfcheck_mqag = SelfCheckMQAG() # set device to 'cuda' if GPU is available
-selfcheck_bertscore = SelfCheckBERTScore()
+selfcheck_bertscore = SelfCheckBERTScore(rescale_with_baseline=True)
 selfcheck_ngram = SelfCheckNgram(n=1) # n=1 means Unigram, n=2 means Bigram, etc.
 
 # LLM's text (e.g. GPT-3 response) to be evaluated at the sentence level  & Split it into sentences
@@ -58,7 +58,7 @@ sent_scores_bertscore = selfcheck_bertscore.predict(
     sampled_passages = [sample1, sample2, sample3], # list of sampled passages
 )
 print(sent_scores_bertscore)
-# [0.0099323  0.08978583]
+# [0.0695562  0.45590915]
 
 # --------------------------------------------------------------------------------------------------------------- #
 # SelfCheck-Ngram: Score at sentence- and document-level where value is in [0.0, +inf) and high value means non-factual
@@ -80,6 +80,22 @@ print(sent_scores_ngram)
 # }
 ```
 
+### SelfCheckGPT Usage: NLI
+
+Entailment (or Contradiction) score with input being the sentence and a sampled passage can be used as the selfcheck score. We use DeBERTa-v3-large fine-tuned to Multi-NLI, and we normalize the probability of "entailment" or "contradiction" classes, and take Prob(contradiction) as the score.
+
+```
+from selfcheckgpt.modeling_selfcheck import SelfCheckNLI
+selfcheck_nli = SelfCheckNLI() # set device to 'cuda' if GPU is available
+
+sent_scores_nli = selfcheck_nli.predict(
+    sentences = sentences,                          # list of sentences
+    sampled_passages = [sample1, sample2, sample3], # list of sampled passages
+)
+print(sent_scores_nli)
+# [0.334014 0.975106 ] -- based on the example above
+```
+
 ### SelfCheckGPT Usage: (LLM) Prompt
 
 In addition, we've tried using LLMs to assess information consistency in a zero-shot setup. We query a LLM to assess whether the i-th sentence is supported by the sample (as the context) using the following prompt.
@@ -87,7 +103,7 @@ In addition, we've tried using LLMs to assess information consistency in a zero-
 ```
 Context: {}
 Sentence: {}
-Is the sentence supported by the context above? 
+Is the sentence supported by the context above?
 Answer Yes or No:
 ```
 
@@ -131,7 +147,7 @@ Each instance consists of:
 As described in our paper, probabities (and generation entropies) of the generative LLM can be used to measure its confidence. Check our example/implementation of this approach in [```demo/experiments/probability-based-baselines.ipynb```](demo/experiments/probability-based-baselines.ipynb)
 
 ### Experimental Results
-- Full details can be found in our paper. 
+- Full details can be found in our paper.
 - Note that our new results show that LLMs such as GPT-3 (text-davinci-003) or ChatGPT (gpt-3.5-turbo) are good at text inconsistency assessment. Based on this finding, we try **SelfCheckGPT-Prompt** where each sentence (to be evaluated) is compared against each and every sampled_passage by prompting ChatGPT. SelfCheckGPT-Prompt is the best-performing method.
 
 Results on the `wiki_bio_gpt3_hallucination` dataset.
@@ -142,6 +158,7 @@ Results on the `wiki_bio_gpt3_hallucination` dataset.
 | SelfCheck-BERTScore  |        81.96       |        44.23       |       58.18       |
 | SelfCheck-QA         |        84.26       |        48.14       |       61.07       |
 | SelfCheck-Unigram    |        85.63       |        58.47       |       64.71       |
+| SelfCheck-NLI        |        92.50       |        66.08       |       74.14       |
 | **SelfCheck-Prompt** |      **93.42**     |      **67.09**     |     **78.32**     |
 
 ## Miscellaneous
