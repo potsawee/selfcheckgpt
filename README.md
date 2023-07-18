@@ -84,7 +84,7 @@ print(sent_scores_ngram)
 
 Entailment (or Contradiction) score with input being the sentence and a sampled passage can be used as the selfcheck score. We use DeBERTa-v3-large fine-tuned to Multi-NLI, and we normalize the probability of "entailment" or "contradiction" classes, and take Prob(contradiction) as the score.
 
-```
+```python
 from selfcheckgpt.modeling_selfcheck import SelfCheckNLI
 selfcheck_nli = SelfCheckNLI() # set device to 'cuda' if GPU is available
 
