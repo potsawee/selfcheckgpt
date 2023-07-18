@@ -239,9 +239,17 @@ class SelfCheckBERTScore:
     """
     SelfCheckGPT (BERTScore variant): Checking LLM's text against its own sampled texts via BERTScore (against best-matched sampled sentence)
     """
-    def __init__(self, default_model="en"):
+    def __init__(self, default_model="en", rescale_with_baseline=True):
+        """
+        :default_model: model for BERTScore
+        :rescale_with_baseline:
+            - whether or not to rescale the score. If False, the values of BERTScore will be very high
+            - this issue was observed and later added to the BERTScore package,
+            - see https://github.com/Tiiiger/bert_score/blob/master/journal/rescale_baseline.md
+        """
         self.nlp = spacy.load("en_core_web_sm")
         self.default_model = default_model # en => roberta-large
+        self.rescale_with_baseline = rescale_with_baseline
         print("SelfCheck-BERTScore initialized")
 
     @torch.no_grad()
@@ -268,7 +276,11 @@ class SelfCheckBERTScore:
             refs  = expand_list1(sentences, num_sentences_sample) # r1,r1,r1,....
             cands = expand_list2(sentences_sample, num_sentences) # s1,s2,s3,...
 
-            P, R, F1 = bert_score.score(cands, refs, lang=self.default_model, verbose=False)
+            P, R, F1 = bert_score.score(
+                    cands, refs,
+                    lang=self.default_model, verbose=False,
+                    rescale_with_baseline=self.rescale_with_baseline,
+            )
             F1_arr = F1.reshape(num_sentences, num_sentences_sample)
             F1_arr_max_axis1 = F1_arr.max(axis=1).values
             F1_arr_max_axis1 = F1_arr_max_axis1.numpy()
