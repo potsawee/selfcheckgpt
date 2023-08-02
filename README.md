@@ -19,7 +19,8 @@ There are three variants of SelfCheck scores in this package as described in the
 ```python
 # Include necessary packages (torch, spacy, ...)
 from selfcheckgpt.modeling_selfcheck import SelfCheckMQAG, SelfCheckBERTScore, SelfCheckNgram
-selfcheck_mqag = SelfCheckMQAG() # set device to 'cuda' if GPU is available
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+selfcheck_mqag = SelfCheckMQAG(device=device) # set device to 'cuda' if GPU is available
 selfcheck_bertscore = SelfCheckBERTScore(rescale_with_baseline=True)
 selfcheck_ngram = SelfCheckNgram(n=1) # n=1 means Unigram, n=2 means Bigram, etc.
 
@@ -86,7 +87,8 @@ Entailment (or Contradiction) score with input being the sentence and a sampled 
 
 ```python
 from selfcheckgpt.modeling_selfcheck import SelfCheckNLI
-selfcheck_nli = SelfCheckNLI() # set device to 'cuda' if GPU is available
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+selfcheck_nli = SelfCheckNLI(device=device) # set device to 'cuda' if GPU is available
 
 sent_scores_nli = selfcheck_nli.predict(
     sentences = sentences,                          # list of sentences
