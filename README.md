@@ -154,8 +154,9 @@ As described in our paper, probabities (and generation entropies) of the generat
 
 Results on the `wiki_bio_gpt3_hallucination` dataset.
 
-| Method               | NonFact (sent-lvl) | Factual (sent-lvl) | PCC (passage-lvl) |
+| Method               |  NonFact (AUC-PR)  |  Factual (AUC-PR)  |   Ranking (PCC)   |
 |----------------------|:------------------:|:------------------:|:-----------------:|
+| Random Guessing      |        72.96       |        27.04       |         -         |
 | GPT-3 Avg(-logP)     |        83.21       |        53.97       |       57.04       |
 | SelfCheck-BERTScore  |        81.96       |        44.23       |       58.18       |
 | SelfCheck-QA         |        84.26       |        48.14       |       61.07       |
