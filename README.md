@@ -3,6 +3,7 @@ SelfCheckGPT
 - Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
 - We investigated several variants of the selfcheck approach: BERTScore, QA, n-gram, and LLM-Prompting.  
 - [18/07/2023] SelfCheck-NLI is added. Additional experiments show that using an entailment classifier (e.g. DeBERTa fine-tuned on Multi-NLI) performs well (see the results in the table below). SelfCheck-NLI method though requires considerably less computation than SelfCheck with LLM-prompting.
+- Slides from ML Collective Talk [11/08/2023]: [Link to Slides](https://drive.google.com/file/d/13LUBPUm4y1nlKigZxXHn7Cl2lw5KuGbc/view)
 
 ![](demo/selfcheck_qa_prompt.png)
 
