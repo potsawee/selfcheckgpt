@@ -1,8 +1,10 @@
 SelfCheckGPT
 =====================================================
+[![arxiv](https://img.shields.io/badge/arXiv-2303.08896-b31b1b.svg)](https://arxiv.org/abs/2303.08896)
+[![PyPI version selfcheckgpt](https://badge.fury.io/py/selfcheckgpt.svg)](https://pypi.python.org/pypi/selfcheckgpt/)
+[![Downloads](https://pepy.tech/badge/selfcheckgpt)](https://pepy.tech/project/selfcheckgpt)
 - Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
-- We investigated several variants of the selfcheck approach: BERTScore, Question-Answering, n-gram, NLI, and LLM-Prompting.  
-- [18/07/2023] SelfCheck-NLI is added. Additional experiments show that using an entailment classifier (e.g., DeBERTa-v3 fine-tuned on MNLI) performs well. SelfCheck-NLI method requires considerably less computation than SelfCheck-Prompt.
+- We investigated several variants of the selfcheck approach: BERTScore, Question-Answering, n-gram, NLI, and LLM-Prompting. 
 - [11/08/2023] Slides from ML Collective Talk [\[Link to Slides\]](https://drive.google.com/file/d/13LUBPUm4y1nlKigZxXHn7Cl2lw5KuGbc/view)
 - [11/10/2023] The paper is accepted and to appear at EMNLP 2023 [\[Poster\]](https://drive.google.com/file/d/1EzQ3MdmrF0gM-83UV2OQ6_QR1RuvhJ9h/view?usp=drive_link)
 
@@ -184,12 +186,18 @@ This work is supported by Cambridge University Press & Assessment (CUP&A), a dep
 ## Citation
 
 ```
-@misc{manakul2023selfcheckgpt,
-      title={SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models},
-      author={Potsawee Manakul and Adian Liusie and Mark J. F. Gales},
-      year={2023},
-      eprint={2303.08896},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
+@inproceedings{manakul-etal-2023-selfcheckgpt,
+    title = "{S}elf{C}heck{GPT}: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models",
+    author = "Manakul, Potsawee  and
+      Liusie, Adian  and
+      Gales, Mark",
+    booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+    month = dec,
+    year = "2023",
+    address = "Singapore",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2023.emnlp-main.557",
+    doi = "10.18653/v1/2023.emnlp-main.557",
+    pages = "9004--9017",
 }
 ```
