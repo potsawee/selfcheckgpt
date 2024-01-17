@@ -187,18 +187,10 @@ This work is supported by Cambridge University Press & Assessment (CUP&A), a dep
 ## Citation
 
 ```
-@inproceedings{manakul-etal-2023-selfcheckgpt,
-    title = "{S}elf{C}heck{GPT}: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models",
-    author = "Manakul, Potsawee  and
-      Liusie, Adian  and
-      Gales, Mark",
-    booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
-    month = dec,
-    year = "2023",
-    address = "Singapore",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2023.emnlp-main.557",
-    doi = "10.18653/v1/2023.emnlp-main.557",
-    pages = "9004--9017",
+@article{manakul2023selfcheckgpt,
+  title={Selfcheckgpt: Zero-resource black-box hallucination detection for generative large language models},
+  author={Manakul, Potsawee and Liusie, Adian and Gales, Mark JF},
+  journal={arXiv preprint arXiv:2303.08896},
+  year={2023}
 }
 ```
