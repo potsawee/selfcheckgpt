@@ -5,8 +5,8 @@ with open('DESCRIPTION.txt') as file:
     long_description = file.read()
 
 REQUIREMENTS = [
-    "transformers>=4.11.3",
-    "torch>=1.10",
+    "transformers>=4.35",
+    "torch>=1.12",
     "numpy",
     "bert_score",
     "spacy",
