@@ -124,10 +124,10 @@ print(sent_scores_prompt)
 # [0.33333333, 0.66666667] -- based on the example above
 ```
 
-The LLM can be any model available on HuggingFace. The default prompt template is `Context: {context}\n\nSentence: {sentence}\n\nIs the sentence supported by the context above? Answer Yes or No.\n\nAnswer: `, but you change it using `selfcheck_prompt.set_prompt_template(new_prompt)`.
+The LLM can be any model available on HuggingFace. The default prompt template is `Context: {context}\n\nSentence: {sentence}\n\nIs the sentence supported by the context above? Answer Yes or No.\n\nAnswer: `, but you can change it using `selfcheck_prompt.set_prompt_template(new_prompt)`.
 
 
-Initial investigation showed that GPT-3 (text-davinci-003) will output either Yes or No 98% of the time, while any remaining outputs can be set to N/A. The output is converted to score: Yes -> 0.0, No -> 1.0, N/A -> 0.5. The inconsistency score is then calculated by averaging.
+Most models (gpt-3.5-turbo, Llama2, Mistral) will output either 'Yes' or 'No' >95% of the time, while any remaining outputs can be set to N/A. The output is converted to score: Yes -> 0.0, No -> 1.0, N/A -> 0.5. The inconsistency score is then calculated by averaging.
 
 ## Dataset
 The `wiki_bio_gpt3_hallucination` dataset currently consists of 238 annotated passages (`v3`). You can find more information in the paper or our data card on HuggingFace: https://huggingface.co/datasets/potsawee/wiki_bio_gpt3_hallucination. To use this dataset, you can either load it through HuggingFace dataset API, or download it directly from below in the JSON format.
@@ -164,7 +164,7 @@ Each instance consists of:
 
 ### Probability-based baselines (e.g. GPT-3's probabilities)
 
-As described in our paper, probabities (and generation entropies) of the generative LLM can be used to measure its confidence. Check our example/implementation of this approach in [```demo/experiments/probability-based-baselines.ipynb```](demo/experiments/probability-based-baselines.ipynb)
+As described in our paper, probabilities (and generation entropies) of the generative LLM can be used to measure its confidence. Check our example/implementation of this approach in [```demo/experiments/probability-based-baselines.ipynb```](demo/experiments/probability-based-baselines.ipynb)
 
 ### Experimental Results
 - Full details can be found in our paper.
