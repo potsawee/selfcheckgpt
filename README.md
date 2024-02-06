@@ -6,8 +6,9 @@ SelfCheckGPT
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 - Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
 - We investigated several variants of the selfcheck approach: BERTScore, Question-Answering, n-gram, NLI, and LLM-Prompting. 
-- [11/08/2023] Slides from ML Collective Talk [\[Link to Slides\]](https://drive.google.com/file/d/13LUBPUm4y1nlKigZxXHn7Cl2lw5KuGbc/view)
-- [11/10/2023] The paper is accepted and to appear at EMNLP 2023 [\[Poster\]](https://drive.google.com/file/d/1EzQ3MdmrF0gM-83UV2OQ6_QR1RuvhJ9h/view?usp=drive_link)
+- [Nov 2023] SelfCheckGPT-NLI Calibration Analysis thanks to Daniel Huynh [\[Link to Article\]](https://huggingface.co/blog/dhuynh95/automatic-hallucination-detection)
+- [Oct 2023] The paper is accepted and to appear at EMNLP 2023 [\[Poster\]](https://drive.google.com/file/d/1EzQ3MdmrF0gM-83UV2OQ6_QR1RuvhJ9h/view?usp=drive_link)
+- [Aug 2023] Slides from ML Collective Talk [\[Link to Slides\]](https://drive.google.com/file/d/13LUBPUm4y1nlKigZxXHn7Cl2lw5KuGbc/view)
 
 ![](demo/selfcheck_qa_prompt.png)
 
@@ -86,7 +87,7 @@ print(sent_scores_ngram)
 # }
 ```
 
-### SelfCheckGPT Usage: NLI
+### SelfCheckGPT Usage: NLI (recommended)
 
 Entailment (or Contradiction) score with input being the sentence and a sampled passage can be used as the selfcheck score. We use DeBERTa-v3-large fine-tuned to Multi-NLI, and we normalize the probability of "entailment" or "contradiction" classes, and take Prob(contradiction) as the score.
 
@@ -103,16 +104,28 @@ print(sent_scores_nli)
 # [0.334014 0.975106 ] -- based on the example above
 ```
 
-### SelfCheckGPT Usage: (LLM) Prompt
+### SelfCheckGPT Usage: LLM Prompt
 
-In addition, we've tried using LLMs to assess information consistency in a zero-shot setup. We query a LLM to assess whether the i-th sentence is supported by the sample (as the context) using the following prompt.
+Prompting an LLM (current support = open-source model, e.g., Llama2, Mistral) to assess information consistency in a zero-shot setup. We query an LLM to assess whether the i-th sentence is supported by the sample (as the context). Similar to other methods, a higher score indicates higher chance of being hallucination. An example when using Mistral is below:
 
+
+```python
+from selfcheckgpt.modeling_selfcheck import SelfCheckLLMPrompt
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+llm_model = "mistralai/Mistral-7B-Instruct-v0.2"
+selfcheck_prompt = SelfCheckLLMPrompt(llm_model, device)
+
+sent_scores_prompt = selfcheck_prompt.predict(
+    sentences = sentences,                          # list of sentences
+    sampled_passages = [sample1, sample2, sample3], # list of sampled passages
+    verbose = True, # whether to show a progress bar
+)
+print(sent_scores_prompt)
+# [0.33333333, 0.66666667] -- based on the example above
 ```
-Context: {}
-Sentence: {}
-Is the sentence supported by the context above?
-Answer Yes or No:
-```
+
+The LLM can be any model available on HuggingFace. The default prompt template is `Context: {context}\n\nSentence: {sentence}\n\nIs the sentence supported by the context above? Answer Yes or No.\n\nAnswer: `, but you change it using `selfcheck_prompt.set_prompt_template(new_prompt)`.
+
 
 Initial investigation showed that GPT-3 (text-davinci-003) will output either Yes or No 98% of the time, while any remaining outputs can be set to N/A. The output is converted to score: Yes -> 0.0, No -> 1.0, N/A -> 0.5. The inconsistency score is then calculated by averaging.
 
@@ -167,7 +180,9 @@ Results on the `wiki_bio_gpt3_hallucination` dataset.
 | SelfCheck-QA         |        84.26       |        48.14       |       61.07       |
 | SelfCheck-Unigram    |        85.63       |        58.47       |       64.71       |
 | SelfCheck-NLI        |        92.50       |        66.08       |       74.14       |
-| **SelfCheck-Prompt** |      **93.42**     |      **67.09**     |     **78.32**     |
+| SelfCheck-Prompt (Llama2-7B-chat)        |        89.05       |        63.06       |       61.52       |
+| SelfCheck-Prompt (Mistral-7B-Instruct-v0.2)        |        91.31       |        62.76       |       74.46       |
+| **SelfCheck-Prompt (gpt-3.5-turbo)** |      **93.42**     |      **67.09**     |     **78.32**     |
 
 ## Miscellaneous
 [MQAG (Multiple-choice Question Answering and Generation)](https://arxiv.org/abs/2301.12307) was proposed in our previous work. Our MQAG implementation is included in this package, which can be used to: (1) generate multiple-choice questions, (2) answer multiple-choice questions, (3) obtain MQAG score.
