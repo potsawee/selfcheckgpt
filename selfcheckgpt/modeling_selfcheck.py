@@ -389,7 +389,7 @@ class SelfCheckLLMPrompt:
     ):
         model = model if model is not None else LLMPromptConfig.model
         self.tokenizer = AutoTokenizer.from_pretrained(model)
-        self.model = AutoModelForCausalLM.from_pretrained(model)
+        self.model = AutoModelForCausalLM.from_pretrained(model, torch_dtype="auto")
         self.model.eval()
         if device is None:
             device = torch.device("cpu")
