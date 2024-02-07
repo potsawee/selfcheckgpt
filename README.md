@@ -181,6 +181,7 @@ Results on the `wiki_bio_gpt3_hallucination` dataset.
 | SelfCheck-Unigram    |        85.63       |        58.47       |       64.71       |
 | SelfCheck-NLI        |        92.50       |        66.08       |       74.14       |
 | SelfCheck-Prompt (Llama2-7B-chat)        |        89.05       |        63.06       |       61.52       |
+| SelfCheck-Prompt (Llama2-13B-chat)        |        91.91       |        64.34       |       75.44       |
 | SelfCheck-Prompt (Mistral-7B-Instruct-v0.2)        |        91.31       |        62.76       |       74.46       |
 | **SelfCheck-Prompt (gpt-3.5-turbo)** |      **93.42**     |      **67.09**     |     **78.32**     |
 
