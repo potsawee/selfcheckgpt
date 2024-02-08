@@ -1,7 +1,7 @@
 SelfCheckGPT
 =====================================================
 [![arxiv](https://img.shields.io/badge/arXiv-2303.08896-b31b1b.svg)](https://arxiv.org/abs/2303.08896)
-[![PyPI version selfcheckgpt](https://badge.fury.io/py/selfcheckgpt.svg)](https://pypi.python.org/pypi/selfcheckgpt/)
+[![PyPI version selfcheckgpt](https://badge.fury.io/py/selfcheckgpt.svg?kill_cache=1)](https://pypi.python.org/pypi/selfcheckgpt/)
 [![Downloads](https://pepy.tech/badge/selfcheckgpt)](https://pepy.tech/project/selfcheckgpt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 - Project page for our paper "[SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896)"
