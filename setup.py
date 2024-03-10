@@ -11,6 +11,7 @@ REQUIREMENTS = [
     "bert_score",
     "spacy",
     "nltk",
+    "openai",
 ]
 
 # some more details
