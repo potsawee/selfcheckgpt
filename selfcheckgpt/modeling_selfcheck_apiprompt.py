@@ -34,7 +34,10 @@ class SelfCheckAPIPrompt:
         if self.client_type == "openai":
             chat_completion = self.client.chat.completions.create(
                 model=self.model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    # {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ],
                 temperature=0.0, # 0.0 = deterministic,
                 max_tokens=5, # max_tokens is the generated one,
             )
@@ -82,8 +85,6 @@ class SelfCheckAPIPrompt:
         No  -> 1.0
         everything else -> 0.5
         """
-        # tested on Llama-2-chat (7B, 13B) --- this code has 100% coverage on wikibio gpt3 generated data
-        # however it may not work with other datasets, or LLMs
         text = text.lower().strip()
         if text[:3] == 'yes':
             text = 'yes'
