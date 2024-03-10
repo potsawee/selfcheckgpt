@@ -106,14 +106,19 @@ print(sent_scores_nli)
 
 ### SelfCheckGPT Usage: LLM Prompt
 
-Prompting an LLM (current support = open-source model, e.g., Llama2, Mistral) to assess information consistency in a zero-shot setup. We query an LLM to assess whether the i-th sentence is supported by the sample (as the context). Similar to other methods, a higher score indicates higher chance of being hallucination. An example when using Mistral is below:
+Prompting an LLM (Llama2, Mistral, OpenAI's GPT) to assess information consistency in a zero-shot setup. We query an LLM to assess whether the i-th sentence is supported by the sample (as the context). Similar to other methods, a higher score indicates higher chance of being hallucination. An example when using Mistral is below:
 
 
 ```python
+# Option1: open-source model
 from selfcheckgpt.modeling_selfcheck import SelfCheckLLMPrompt
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 llm_model = "mistralai/Mistral-7B-Instruct-v0.2"
 selfcheck_prompt = SelfCheckLLMPrompt(llm_model, device)
+
+# Option2: API access (currently only support client_type="openai")
+# from selfcheckgpt.modeling_selfcheck_apiprompt import SelfCheckAPIPrompt
+# selfcheck_prompt = SelfCheckAPIPrompt(client_type="openai", model="gpt-3.5-turbo")
 
 sent_scores_prompt = selfcheck_prompt.predict(
     sentences = sentences,                          # list of sentences
