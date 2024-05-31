@@ -12,6 +12,7 @@ REQUIREMENTS = [
     "spacy",
     "nltk",
     "openai",
+    "groq",
 ]
 
 # some more details

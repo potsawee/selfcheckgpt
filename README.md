@@ -116,9 +116,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 llm_model = "mistralai/Mistral-7B-Instruct-v0.2"
 selfcheck_prompt = SelfCheckLLMPrompt(llm_model, device)
 
-# Option2: API access (currently only support client_type="openai")
+# Option2: API access 
+# (currently only support OpenAI and Groq)
 # from selfcheckgpt.modeling_selfcheck_apiprompt import SelfCheckAPIPrompt
 # selfcheck_prompt = SelfCheckAPIPrompt(client_type="openai", model="gpt-3.5-turbo")
+# selfcheck_prompt = SelfCheckAPIPrompt(client_type="groq", model="llama3-70b-8192", api_key="your-api-key")
 
 sent_scores_prompt = selfcheck_prompt.predict(
     sentences = sentences,                          # list of sentences

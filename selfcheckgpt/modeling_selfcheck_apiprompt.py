@@ -1,4 +1,5 @@
 from openai import OpenAI
+from groq import Groq
 from tqdm import tqdm
 from typing import Dict, List, Set, Tuple, Union
 import numpy as np
@@ -11,14 +12,17 @@ class SelfCheckAPIPrompt:
         self,
         client_type = "openai",
         model = "gpt-3.5-turbo",
+        api_key = None,
     ):
-        assert client_type in ["openai"]
         if client_type == "openai":
             # using default keys
             # os.environ.get("OPENAI_ORGANIZATION")
             # os.environ.get("OPENAI_API_KEY")
             self.client = OpenAI()
             print("Initiate OpenAI client... model = {}".format(model)) 
+        elif client_type == "groq":
+            self.client = Groq(api_key=api_key)
+            print("Initiate Groq client... model = {}".format(model))
         
         self.client_type = client_type
         self.model = model
@@ -31,7 +35,7 @@ class SelfCheckAPIPrompt:
         self.prompt_template = prompt_template
 
     def completion(self, prompt: str):
-        if self.client_type == "openai":
+        if self.client_type == "openai" or self.client_type == "groq":
             chat_completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
